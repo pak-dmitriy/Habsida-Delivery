@@ -2,10 +2,7 @@ package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.OrderPaymentDto;
 import com.delivery.habsida.dto.OrderPaymentRequest;
-import com.delivery.habsida.entity.Order;
-import com.delivery.habsida.entity.OrderPayment;
-import com.delivery.habsida.entity.PaymentStatus;
-import com.delivery.habsida.entity.Transaction;
+import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.OrderNotFoundException;
 import com.delivery.habsida.exception.PaymentNotFoundException;
 import com.delivery.habsida.exception.TransactionNotFoundException;
@@ -60,16 +57,23 @@ public class OrderPaymentService {
         getOrderOrThrow(storeId, orderId);
 
         OrderPayment orderPayment = getPaymentOrThrow(orderId);
-        orderPayment.setStatus(request.status());
+        PaymentStatus oldStatus = orderPayment.getStatus();
 
-        if (request.status() == PaymentStatus.PAID) {
+        if (oldStatus != PaymentStatus.PAID && request.status() == PaymentStatus.PAID) {
             orderPayment.setPaidAt(LocalDateTime.now());
         }
+        if(oldStatus == PaymentStatus.PAID && request.status() != PaymentStatus.PAID) {
+            orderPayment.setPaidAt(null);
+        }
+        orderPayment.setStatus(request.status());
 
         if (request.transactionId() != null) {
             Transaction transResult = getTransactionOrThrow(request.transactionId());
             if (!transResult.getOrderPayment().getId().equals(orderPayment.getId()) ) {
                 throw new TransactionNotFoundException("Transaction not found");
+            }
+            if(transResult.getStatus() != TransactionStatus.SUCCESS) {
+                throw new TransactionNotFoundException("Transaction not paid");
             }
             orderPayment.setTransaction(transResult);
         }

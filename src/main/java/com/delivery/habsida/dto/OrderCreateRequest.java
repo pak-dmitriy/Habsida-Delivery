@@ -1,6 +1,7 @@
 package com.delivery.habsida.dto;
 
 import com.delivery.habsida.entity.OrderType;
+import com.delivery.habsida.entity.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,8 @@ public record OrderCreateRequest(
         @NotNull(message = "Order type can not be empty")
         OrderType type,
 
+        @NotNull(message = "PaymentMethod can not be empty")
+        PaymentMethod method,
 
         String customerNote,
 

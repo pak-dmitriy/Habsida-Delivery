@@ -312,6 +312,28 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
+    @ExceptionHandler(StoreHourNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleStoreHourNotFoundException(StoreHourNotFoundException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(StoreBreakNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleStoreBreakNotFoundException(StoreBreakNotFoundException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handlerPaymentNotFoundException(PaymentNotFoundException ex, HttpServletRequest request) {

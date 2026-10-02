@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -52,6 +53,7 @@ public class OrderPaymentServiceTest {
 
         transaction = new Transaction();
         transaction.setId(1L);
+        transaction.setOrderPayment(orderPayment);
     }
 
     @Test
@@ -146,6 +148,34 @@ public class OrderPaymentServiceTest {
                 PaymentStatus.PAID
         );
         assertThrows(OrderNotFoundException.class,
-                ()-> orderPaymentService.updateOrderPayment(1L, 1L, request));
+                () -> orderPaymentService.updateOrderPayment(1L, 1L, request));
+    }
+
+    @Test
+    void updateOrderPayment_shouldThrowException_whenTransactionBelongsToAnotherOrder() {
+
+        OrderPayment otherPayment = new OrderPayment();
+        otherPayment.setId(99L);
+        otherPayment.setStatus(PaymentStatus.PAID);
+        otherPayment.setMethod(PaymentMethod.CASH);
+        otherPayment.setOrder(order);
+
+        Transaction otherTransaction = new Transaction();
+        otherTransaction.setId(2L);
+        otherTransaction.setStatus(TransactionStatus.SUCCESS);
+        otherTransaction.setAmount(new BigDecimal(10.00));
+        otherTransaction.setOrderPayment(otherPayment);
+
+        when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
+        when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(orderPayment));
+        when(transactionRepository.findById(2L)).thenReturn(Optional.of(otherTransaction));
+
+        OrderPaymentRequest request = new OrderPaymentRequest(
+                2L,
+                PaymentStatus.PAID
+        );
+
+        assertThrows(TransactionNotFoundException.class,
+                () -> orderPaymentService.updateOrderPayment(1L, 1L, request));
     }
 }

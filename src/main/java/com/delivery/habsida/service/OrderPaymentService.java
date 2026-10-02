@@ -48,7 +48,6 @@ public class OrderPaymentService {
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found"));
     }
 
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public OrderPaymentDto getOrderPayment(Long storeId, Long orderId) {
         getOrderOrThrow(storeId, orderId);
         OrderPayment orderPayment = getPaymentOrThrow(orderId);
@@ -57,7 +56,6 @@ public class OrderPaymentService {
     }
 
     @Transactional
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public OrderPaymentDto updateOrderPayment(Long storeId, Long orderId, OrderPaymentRequest request) {
         getOrderOrThrow(storeId, orderId);
 

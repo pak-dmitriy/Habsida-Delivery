@@ -59,17 +59,20 @@ public class OrderPaymentService {
     public OrderPaymentDto updateOrderPayment(Long storeId, Long orderId, OrderPaymentRequest request) {
         getOrderOrThrow(storeId, orderId);
 
-        OrderPayment result = getPaymentOrThrow(orderId);
-        result.setStatus(request.status());
+        OrderPayment orderPayment = getPaymentOrThrow(orderId);
+        orderPayment.setStatus(request.status());
 
         if (request.status() == PaymentStatus.PAID) {
-            result.setPaidAt(LocalDateTime.now());
+            orderPayment.setPaidAt(LocalDateTime.now());
         }
 
         if (request.transactionId() != null) {
             Transaction transResult = getTransactionOrThrow(request.transactionId());
-            result.setTransaction(transResult);
+            if (!transResult.getOrderPayment().getId().equals(orderPayment.getId()) ) {
+                throw new TransactionNotFoundException("Transaction not found");
+            }
+            orderPayment.setTransaction(transResult);
         }
-        return OrderPaymentDto.from(result);
+        return OrderPaymentDto.from(orderPayment);
     }
 }

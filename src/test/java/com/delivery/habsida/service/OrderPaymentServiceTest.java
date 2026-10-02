@@ -9,7 +9,6 @@ import com.delivery.habsida.exception.TransactionNotFoundException;
 import com.delivery.habsida.repository.OrderPaymentRepository;
 import com.delivery.habsida.repository.OrderRepository;
 import com.delivery.habsida.repository.TransactionRepository;
-import org.assertj.core.api.LocalDateTimeAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,13 +46,14 @@ public class OrderPaymentServiceTest {
 
         orderPayment = new OrderPayment();
         orderPayment.setOrder(order);
-        orderPayment.setStatus(PaymentStatus.PAID);
+        orderPayment.setStatus(PaymentStatus.UNPAID);
         orderPayment.setMethod(PaymentMethod.CASH);
         orderPayment.setId(1L);
 
         transaction = new Transaction();
         transaction.setId(1L);
         transaction.setOrderPayment(orderPayment);
+        transaction.setStatus(TransactionStatus.SUCCESS);
     }
 
     @Test
@@ -62,7 +62,7 @@ public class OrderPaymentServiceTest {
         when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(orderPayment));
 
         OrderPaymentDto response = orderPaymentService.getOrderPayment(1L, 1L);
-        assertEquals(PaymentStatus.PAID, response.status());
+        assertEquals(PaymentStatus.UNPAID, response.status());
         assertEquals(PaymentMethod.CASH, response.method());
     }
 
@@ -88,11 +88,11 @@ public class OrderPaymentServiceTest {
         when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
         when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(orderPayment));
         when(transactionRepository.findById(1L)).thenReturn(Optional.of(transaction));
+
         OrderPaymentRequest request = new OrderPaymentRequest(
                 1L,
                 PaymentStatus.PAID
         );
-
         OrderPaymentDto response = orderPaymentService.updateOrderPayment(1L, 1L, request);
         assertEquals(1L, response.transaction().id());
         assertEquals(PaymentStatus.PAID, response.status());
@@ -177,5 +177,80 @@ public class OrderPaymentServiceTest {
 
         assertThrows(TransactionNotFoundException.class,
                 () -> orderPaymentService.updateOrderPayment(1L, 1L, request));
+    }
+
+    @Test
+    void updateOrderPayment_shouldThrowException_whenTransactionStatusNotPaid() {
+
+        OrderPayment failedPayment = new OrderPayment();
+        failedPayment.setId(1L);
+        failedPayment.setStatus(PaymentStatus.PAID);
+        failedPayment.setMethod(PaymentMethod.CASH);
+        failedPayment.setOrder(order);
+
+        Transaction failedTransaction = new Transaction();
+        failedTransaction.setId(1L);
+        failedTransaction.setStatus(TransactionStatus.FAILED);
+        failedTransaction.setAmount(new BigDecimal(10.00));
+        failedTransaction.setOrderPayment(failedPayment);
+
+        when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
+        when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(failedPayment));
+        when(transactionRepository.findById(1L)).thenReturn(Optional.of(failedTransaction));
+
+        OrderPaymentRequest request = new OrderPaymentRequest(
+                1L,
+                PaymentStatus.PAID
+        );
+
+        TransactionNotFoundException ex = assertThrows(TransactionNotFoundException.class,
+                () -> orderPaymentService.updateOrderPayment(1L, 1L, request));
+        assertEquals("Transaction not paid", ex.getMessage());
+    }
+
+    @Test
+    void updateOrderPayment_shouldKeepPaidAt_whenStatusAlreadyPaid() {
+
+        LocalDateTime expectedPaidAt = LocalDateTime.of(2026, 10, 2, 20, 24, 0);
+
+        OrderPayment updatedPayment = new OrderPayment();
+        updatedPayment.setId(1L);
+        updatedPayment.setStatus(PaymentStatus.PAID);
+        updatedPayment.setMethod(PaymentMethod.CASH);
+        updatedPayment.setPaidAt(expectedPaidAt);
+        updatedPayment.setOrder(order);
+
+        when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
+        when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(updatedPayment));
+
+        OrderPaymentRequest request = new OrderPaymentRequest(
+                null,
+                PaymentStatus.PAID
+        );
+        orderPaymentService.updateOrderPayment(1L, 1L, request);
+        assertEquals(expectedPaidAt, updatedPayment.getPaidAt());
+    }
+
+    @Test
+    void updateOrderPayment_shouldResetPaidAt_whenStatusChangedToRefunded() {
+
+        LocalDateTime expectedPaidAt = LocalDateTime.of(2026, 10, 2, 20, 24, 0);
+
+        OrderPayment updatedPayment = new OrderPayment();
+        updatedPayment.setId(1L);
+        updatedPayment.setStatus(PaymentStatus.PAID);
+        updatedPayment.setMethod(PaymentMethod.CASH);
+        updatedPayment.setPaidAt(expectedPaidAt);
+        updatedPayment.setOrder(order);
+
+        when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
+        when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(updatedPayment));
+
+        OrderPaymentRequest request = new OrderPaymentRequest(
+                null,
+                PaymentStatus.REFUNDED
+        );
+        orderPaymentService.updateOrderPayment(1L, 1L, request);
+        assertNull(updatedPayment.getPaidAt());
     }
 }

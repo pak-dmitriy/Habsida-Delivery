@@ -14,11 +14,11 @@ CREATE TABLE order_payments
 CREATE TABLE transactions
 (
     id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    order_payment_id BIGINT NOT NULL REFERENCES order_payments (id),
-    status           VARCHAR(50) CHECK (status IN ('SUCCESS', 'FAILED')) NOT NULL,
-    amount           NUMERIC(10, 2)                                      NOT NULL,
-    created_at       TIMESTAMPTZ                                         NOT NULL DEFAULT NOW(),
-    updated_at       TIMESTAMPTZ                                         NOT NULL DEFAULT NOW()
+    order_payment_id BIGINT                                                         NOT NULL REFERENCES order_payments (id),
+    status           VARCHAR(50) CHECK (status IN ('SUCCESS', 'PENDING', 'FAILED')) NOT NULL,
+    amount           NUMERIC(10, 2)                                                 NOT NULL,
+    created_at       TIMESTAMPTZ                                                    NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ                                                    NOT NULL DEFAULT NOW()
 );
 
 ALTER TABLE order_payments

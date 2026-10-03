@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Service
 @Transactional(readOnly = true)
@@ -59,11 +60,15 @@ public class OrderPaymentService {
         OrderPayment orderPayment = getPaymentOrThrow(orderId);
         PaymentStatus oldStatus = orderPayment.getStatus();
 
+
         if (oldStatus != PaymentStatus.PAID && request.status() == PaymentStatus.PAID) {
             orderPayment.setPaidAt(LocalDateTime.now());
         }
         if(oldStatus == PaymentStatus.PAID && request.status() != PaymentStatus.PAID) {
             orderPayment.setPaidAt(null);
+        }
+        if(request.method() != null) {
+           orderPayment.setMethod(request.method());
         }
         orderPayment.setStatus(request.status());
 
@@ -75,6 +80,7 @@ public class OrderPaymentService {
             if(transResult.getStatus() != TransactionStatus.SUCCESS) {
                 throw new TransactionNotFoundException("Transaction not paid");
             }
+
             orderPayment.setTransaction(transResult);
         }
         return OrderPaymentDto.from(orderPayment);

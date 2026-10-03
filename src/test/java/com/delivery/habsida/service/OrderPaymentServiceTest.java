@@ -91,7 +91,8 @@ public class OrderPaymentServiceTest {
 
         OrderPaymentRequest request = new OrderPaymentRequest(
                 1L,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         OrderPaymentDto response = orderPaymentService.updateOrderPayment(1L, 1L, request);
         assertEquals(1L, response.transaction().id());
@@ -107,7 +108,8 @@ public class OrderPaymentServiceTest {
 
         OrderPaymentRequest request = new OrderPaymentRequest(
                 1L,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         assertThrows(TransactionNotFoundException.class,
                 () -> orderPaymentService.updateOrderPayment(1L, 1L, request));
@@ -119,7 +121,8 @@ public class OrderPaymentServiceTest {
         when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(orderPayment));
         OrderPaymentRequest request = new OrderPaymentRequest(
                 null,
-                PaymentStatus.UNPAID
+                PaymentStatus.UNPAID,
+                PaymentMethod.CASH
         );
         OrderPaymentDto response = orderPaymentService.updateOrderPayment(1L, 1L, request);
         assertEquals(PaymentStatus.UNPAID, response.status());
@@ -134,7 +137,8 @@ public class OrderPaymentServiceTest {
 
         OrderPaymentRequest request = new OrderPaymentRequest(
                 1L,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         assertThrows(PaymentNotFoundException.class,
                 () -> orderPaymentService.updateOrderPayment(1L, 1L, request));
@@ -145,7 +149,8 @@ public class OrderPaymentServiceTest {
         when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.empty());
         OrderPaymentRequest request = new OrderPaymentRequest(
                 1L,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         assertThrows(OrderNotFoundException.class,
                 () -> orderPaymentService.updateOrderPayment(1L, 1L, request));
@@ -172,7 +177,8 @@ public class OrderPaymentServiceTest {
 
         OrderPaymentRequest request = new OrderPaymentRequest(
                 2L,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
 
         assertThrows(TransactionNotFoundException.class,
@@ -200,7 +206,8 @@ public class OrderPaymentServiceTest {
 
         OrderPaymentRequest request = new OrderPaymentRequest(
                 1L,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
 
         TransactionNotFoundException ex = assertThrows(TransactionNotFoundException.class,
@@ -225,7 +232,8 @@ public class OrderPaymentServiceTest {
 
         OrderPaymentRequest request = new OrderPaymentRequest(
                 null,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         orderPaymentService.updateOrderPayment(1L, 1L, request);
         assertEquals(expectedPaidAt, updatedPayment.getPaidAt());
@@ -248,9 +256,38 @@ public class OrderPaymentServiceTest {
 
         OrderPaymentRequest request = new OrderPaymentRequest(
                 null,
-                PaymentStatus.REFUNDED
+                PaymentStatus.REFUNDED,
+                PaymentMethod.CASH
         );
         orderPaymentService.updateOrderPayment(1L, 1L, request);
         assertNull(updatedPayment.getPaidAt());
+    }
+
+    @Test
+    void updateOrderPayment_shouldUpdateMethod_whenPaymentMethodChanged() {
+        when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
+        when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(orderPayment));
+
+        OrderPaymentRequest request = new OrderPaymentRequest(
+                null,
+                PaymentStatus.PAID,
+                PaymentMethod.ONLINE
+        );
+        orderPaymentService.updateOrderPayment(1L, 1L, request);
+        assertEquals(PaymentMethod.ONLINE, orderPayment.getMethod());
+    }
+
+    @Test
+    void updateOrderPayment_shouldKeepMethod_whenPaymentMethodNotChanged() {
+        when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
+        when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(orderPayment));
+
+        OrderPaymentRequest request = new OrderPaymentRequest(
+                null,
+                PaymentStatus.PAID,
+                null
+        );
+        orderPaymentService.updateOrderPayment(1L, 1L, request);
+        assertEquals(PaymentMethod.CASH, orderPayment.getMethod());
     }
 }

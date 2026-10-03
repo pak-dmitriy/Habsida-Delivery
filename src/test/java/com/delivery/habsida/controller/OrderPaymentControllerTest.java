@@ -96,7 +96,8 @@ public class OrderPaymentControllerTest {
     void updateOrderPayment_success() throws Exception {
         OrderPaymentRequest request = new OrderPaymentRequest(
                 null,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         OrderPaymentDto response = new OrderPaymentDto(
                 1L,
@@ -126,6 +127,7 @@ public class OrderPaymentControllerTest {
     void updateOrderPayment_shouldReturn404_whenStatusIsNull() throws Exception {
         OrderPaymentRequest request = new OrderPaymentRequest(
                 null,
+                null,
                 null
         );
         mockMvc.perform(MockMvcRequestBuilders.put("/stores/{storeId}/orders/{orderId}/payment", 1L, 1L)
@@ -139,7 +141,8 @@ public class OrderPaymentControllerTest {
     void updateOrderPayment_shouldReturn404_whenTransactionNotFound() throws Exception {
         OrderPaymentRequest request = new OrderPaymentRequest(
                 1L,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         when(orderPaymentService.updateOrderPayment(anyLong(), anyLong(), any())).thenThrow(new TransactionNotFoundException("Transaction not found"));
         mockMvc.perform(MockMvcRequestBuilders.put("/stores/{storeId}/orders/{orderId}/payment", 1L, 1L)
@@ -153,7 +156,8 @@ public class OrderPaymentControllerTest {
     void updateOrderPayment_shouldReturn404_whenOrderNotFound() throws Exception {
         OrderPaymentRequest request = new OrderPaymentRequest(
                 null,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         when(orderPaymentService.updateOrderPayment(anyLong(), anyLong(), any())).thenThrow(new OrderNotFoundException("Order not found"));
         mockMvc.perform(MockMvcRequestBuilders.put("/stores/{storeId}/orders/{orderId}/payment", 1L, 1L)
@@ -167,7 +171,8 @@ public class OrderPaymentControllerTest {
     void updateOrderPayment_shouldReturn404_whenPaymentNotFound() throws Exception {
         OrderPaymentRequest request = new OrderPaymentRequest(
                 null,
-                PaymentStatus.PAID
+                PaymentStatus.PAID,
+                PaymentMethod.CASH
         );
         when(orderPaymentService.updateOrderPayment(anyLong(), anyLong(), any())).thenThrow(new PaymentNotFoundException("Payment not found"));
         mockMvc.perform(MockMvcRequestBuilders.put("/stores/{storeId}/orders/{orderId}/payment", 1L, 1L)

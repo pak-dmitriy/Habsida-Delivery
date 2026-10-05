@@ -5,6 +5,7 @@ import com.delivery.habsida.dto.StoreBreakRequest;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.StoreBreak;
 import com.delivery.habsida.entity.StoreHour;
+import com.delivery.habsida.exception.InvalidStoreBreakException;
 import com.delivery.habsida.exception.StoreBreakNotFoundException;
 import com.delivery.habsida.exception.StoreHourNotFoundException;
 import com.delivery.habsida.repository.StoreBreakRepository;
@@ -51,6 +52,8 @@ public class StoreBreakServiceTest {
         storeHour.setId(1L);
         storeHour.setStore(store);
         storeHour.setDayOfWeek(DayOfWeek.MONDAY);
+        storeHour.setOpenTime(LocalTime.of(9, 0));
+        storeHour.setCloseTime(LocalTime.of(18, 0));
 
         storeBreak = new StoreBreak();
         storeBreak.setId(1L);
@@ -70,6 +73,19 @@ public class StoreBreakServiceTest {
         assertEquals(1L, response.storeHourId());
         assertEquals(LocalTime.of(15, 0), response.startTime());
         assertEquals(LocalTime.of(16, 0), response.endTime());
+    }
+
+    @Test
+    void createStoreBreak_overlapsExistingBreak_throwsException() {
+        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.existsByStoreHourIdAndStartTimeLessThanAndEndTimeGreaterThan(
+                1L, LocalTime.of(14, 30), LocalTime.of(13, 30))).thenReturn(true);
+
+        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(13, 30), LocalTime.of(14, 30));
+
+        assertThrows(InvalidStoreBreakException.class,
+                () -> storeBreakService.createStoreBreak(1L, 1L, request));
+        verify(storeBreakRepository, never()).save(any());
     }
 
     @Test
@@ -154,6 +170,20 @@ public class StoreBreakServiceTest {
         StoreBreakDto response = storeBreakService.updateStoreBreak(1L, 1L, 1L, request);
         assertEquals(LocalTime.of(15, 0), response.startTime());
         assertEquals(LocalTime.of(16, 0), response.endTime());
+    }
+
+    @Test
+    void updateStoreBreak_overlapsExistingBreak_throwsException() {
+        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.of(storeBreak));
+        when(storeBreakRepository.existsByStoreHourIdAndIdNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                1L, 1L, LocalTime.of(16, 0), LocalTime.of(15, 0))).thenReturn(true);
+
+        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(15, 0), LocalTime.of(16, 0));
+
+        assertThrows(InvalidStoreBreakException.class,
+                () -> storeBreakService.updateStoreBreak(1L, 1L, 1L, request));
+        verify(storeBreakRepository, never()).save(any());
     }
 
     @Test

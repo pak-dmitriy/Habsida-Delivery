@@ -32,4 +32,18 @@ public record StoreHourRequest(
         }
         return openTime.isBefore(closeTime);
     }
+
+    @JsonIgnore
+    @AssertTrue(message = "Last order cutoff time must be within working hours")
+    public boolean isLastOrderCutoffTimeValid() {
+        if (Boolean.TRUE.equals(dayOff) || lastOrderCutoffTime == null) {
+            return true;
+        }
+
+        if (openTime == null || closeTime == null) {
+            return true;
+        }
+        return !lastOrderCutoffTime.isBefore(openTime)
+                && !lastOrderCutoffTime.isAfter(closeTime);
+    }
 }

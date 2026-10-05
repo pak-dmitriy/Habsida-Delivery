@@ -3,9 +3,12 @@ package com.delivery.habsida.service;
 import com.delivery.habsida.dto.StoreHourDto;
 import com.delivery.habsida.dto.StoreHourRequest;
 import com.delivery.habsida.entity.Store;
+import com.delivery.habsida.entity.StoreBreak;
 import com.delivery.habsida.entity.StoreHour;
+import com.delivery.habsida.exception.InvalidStoreBreakException;
 import com.delivery.habsida.exception.StoreHourNotFoundException;
 import com.delivery.habsida.exception.StoreNotFoundException;
+import com.delivery.habsida.repository.StoreBreakRepository;
 import com.delivery.habsida.repository.StoreHourRepository;
 import com.delivery.habsida.repository.StoreRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,10 +22,14 @@ import java.util.List;
 public class StoreHourService {
     private final StoreHourRepository storeHourRepository;
     private final StoreRepository storeRepository;
+    private final StoreBreakRepository storeBreakRepository;
 
-    public StoreHourService(StoreHourRepository storeHourRepository, StoreRepository storeRepository) {
+    public StoreHourService(StoreHourRepository storeHourRepository,
+                            StoreRepository storeRepository,
+                            StoreBreakRepository storeBreakRepository) {
         this.storeHourRepository = storeHourRepository;
         this.storeRepository = storeRepository;
+        this.storeBreakRepository = storeBreakRepository;
     }
 
     private StoreHour getStoreHourOrThrow(Long storeId, Long hourId) {
@@ -75,8 +82,25 @@ public class StoreHourService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public StoreHourDto updateStoreHour(Long storeId, Long hourId, StoreHourRequest request) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+        validateBreaksFitNewHours(hourId, request);
         applyRequest(storeHour, request);
         return StoreHourDto.from(storeHourRepository.save(storeHour));
+    }
+
+    private void validateBreaksFitNewHours(Long hourId, StoreHourRequest request) {
+        List<StoreBreak> breaks = storeBreakRepository.findByStoreHourId(hourId);
+        if (breaks.isEmpty()) {
+            return;
+        }
+        if (Boolean.TRUE.equals(request.dayOff())) {
+            throw new InvalidStoreBreakException("Cannot make the day off while breaks exist");
+        }
+        boolean anyOutside = breaks.stream().anyMatch(b ->
+                b.getStartTime().isBefore(request.openTime())
+                        || b.getEndTime().isAfter(request.closeTime()));
+        if (anyOutside) {
+            throw new InvalidStoreBreakException("Existing breaks do not fit into the new working hours");
+        }
     }
 
 

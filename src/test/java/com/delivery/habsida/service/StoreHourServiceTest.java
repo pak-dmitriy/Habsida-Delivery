@@ -3,9 +3,12 @@ package com.delivery.habsida.service;
 import com.delivery.habsida.dto.StoreHourDto;
 import com.delivery.habsida.dto.StoreHourRequest;
 import com.delivery.habsida.entity.Store;
+import com.delivery.habsida.entity.StoreBreak;
 import com.delivery.habsida.entity.StoreHour;
+import com.delivery.habsida.exception.InvalidStoreBreakException;
 import com.delivery.habsida.exception.StoreHourNotFoundException;
 import com.delivery.habsida.exception.StoreNotFoundException;
+import com.delivery.habsida.repository.StoreBreakRepository;
 import com.delivery.habsida.repository.StoreHourRepository;
 import com.delivery.habsida.repository.StoreRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +37,9 @@ public class StoreHourServiceTest {
 
     @Mock
     private StoreRepository storeRepository;
+
+    @Mock
+    private StoreBreakRepository storeBreakRepository;
 
     @InjectMocks
     private StoreHourService storeHourService;
@@ -167,6 +173,56 @@ public class StoreHourServiceTest {
         assertEquals(LocalTime.of(11, 0), response.openTime());
         assertEquals(LocalTime.of(23, 0), response.closeTime());
         assertEquals(LocalTime.of(22, 30), response.lastOrderCutoffTime());
+    }
+
+    @Test
+    void updateStoreHour_breakOutsideNewHours_throwsException() {
+        StoreBreak storeBreak = new StoreBreak();
+        storeBreak.setStartTime(LocalTime.of(13, 0));
+        storeBreak.setEndTime(LocalTime.of(14, 0));
+
+        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+
+        StoreHourRequest request = new StoreHourRequest(
+                DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), false, null);
+
+        assertThrows(InvalidStoreBreakException.class,
+                () -> storeHourService.updateStoreHour(1L, 1L, request));
+        verify(storeHourRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStoreHour_dayOffWithBreaks_throwsException() {
+        StoreBreak storeBreak = new StoreBreak();
+        storeBreak.setStartTime(LocalTime.of(13, 0));
+        storeBreak.setEndTime(LocalTime.of(14, 0));
+
+        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+
+        StoreHourRequest request = new StoreHourRequest(
+                DayOfWeek.MONDAY, null, null, true, null);
+
+        assertThrows(InvalidStoreBreakException.class,
+                () -> storeHourService.updateStoreHour(1L, 1L, request));
+        verify(storeHourRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStoreHour_breakFitsNewHours_success() {
+        StoreBreak storeBreak = new StoreBreak();
+        storeBreak.setStartTime(LocalTime.of(13, 0));
+        storeBreak.setEndTime(LocalTime.of(14, 0));
+
+        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeHourRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        StoreHourRequest request = new StoreHourRequest(
+                DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(20, 0), false, null);
+
+        assertDoesNotThrow(() -> storeHourService.updateStoreHour(1L, 1L, request));
     }
 
     @Test

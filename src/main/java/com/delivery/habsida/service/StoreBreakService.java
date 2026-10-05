@@ -4,6 +4,7 @@ import com.delivery.habsida.dto.StoreBreakDto;
 import com.delivery.habsida.dto.StoreBreakRequest;
 import com.delivery.habsida.entity.StoreBreak;
 import com.delivery.habsida.entity.StoreHour;
+import com.delivery.habsida.exception.InvalidStoreBreakException;
 import com.delivery.habsida.exception.StoreBreakNotFoundException;
 import com.delivery.habsida.exception.StoreHourNotFoundException;
 import com.delivery.habsida.repository.StoreBreakRepository;
@@ -40,6 +41,24 @@ public class StoreBreakService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public StoreBreakDto createStoreBreak(Long storeId, Long hourId, StoreBreakRequest request) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+
+        if (storeHour.isDayOff()) {
+            throw new InvalidStoreBreakException("Cannot create a break for a day off");
+        }
+        if (request.startTime() == null || request.endTime() == null || !request.startTime().isBefore(request.endTime())) {
+            throw new InvalidStoreBreakException("Invalid start time or end time");
+        }
+
+        if (storeHour.getOpenTime() == null || storeHour.getCloseTime() == null
+                || request.startTime().isBefore(storeHour.getOpenTime())
+                || request.endTime().isAfter(storeHour.getCloseTime())) {
+            throw new InvalidStoreBreakException("Invalid start time or end time");
+        }
+
+        if (storeBreakRepository.existsByStoreHourIdAndStartTimeLessThanAndEndTimeGreaterThan(hourId, request.endTime(), request.startTime())) {
+            throw new InvalidStoreBreakException("Break overlaps with an existing break");
+        }
+
         StoreBreak storeBreak = new StoreBreak();
         storeBreak.setStoreHour(storeHour);
         storeBreak.setStartTime(request.startTime());
@@ -65,6 +84,25 @@ public class StoreBreakService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public StoreBreakDto updateStoreBreak(Long storeId, Long hourId, Long breakId, StoreBreakRequest request) {
         StoreBreak storeBreak = getStoreBreakOrThrow(storeId, hourId, breakId);
+        StoreHour storeHour = storeBreak.getStoreHour();
+
+        if (storeHour.isDayOff()) {
+            throw new InvalidStoreBreakException("Cannot update a break for a day off");
+        }
+        if (request.startTime() == null || request.endTime() == null || !request.startTime().isBefore(request.endTime())) {
+            throw new InvalidStoreBreakException("Invalid start time or end time");
+        }
+
+        if (storeHour.getOpenTime() == null || storeHour.getCloseTime() == null
+                || request.startTime().isBefore(storeHour.getOpenTime())
+                || request.endTime().isAfter(storeHour.getCloseTime())) {
+            throw new InvalidStoreBreakException("Invalid start time or end time");
+        }
+
+        if (storeBreakRepository.existsByStoreHourIdAndIdNotAndStartTimeLessThanAndEndTimeGreaterThan(hourId, breakId, request.endTime(), request.startTime())) {
+            throw new InvalidStoreBreakException("Break overlaps with an existing break");
+        }
+
         storeBreak.setStartTime(request.startTime());
         storeBreak.setEndTime(request.endTime());
         return StoreBreakDto.from(storeBreakRepository.save(storeBreak));

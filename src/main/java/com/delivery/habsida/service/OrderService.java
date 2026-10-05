@@ -29,6 +29,7 @@ public class OrderService {
     private final ModifierOptionRepository modifierOptionRepository;
     private final OrderItemModifierRepository orderItemModifierRepository;
     private final ProductModifierGroupRepository productModifierGroupRepository;
+    private final OrderPaymentRepository orderPaymentRepository;
 
     public OrderService(OrderRepository orderRepository,
                         StoreRepository storeRepository,
@@ -38,7 +39,8 @@ public class OrderService {
                         OrderItemRepository orderItemRepository,
                         ModifierOptionRepository modifierOptionRepository,
                         OrderItemModifierRepository orderItemModifierRepository,
-                        ProductModifierGroupRepository productModifierGroupRepository) {
+                        ProductModifierGroupRepository productModifierGroupRepository,
+                        OrderPaymentRepository orderPaymentRepository) {
         this.orderRepository = orderRepository;
         this.storeRepository = storeRepository;
         this.customerRepository = customerRepository;
@@ -48,6 +50,7 @@ public class OrderService {
         this.modifierOptionRepository = modifierOptionRepository;
         this.orderItemModifierRepository = orderItemModifierRepository;
         this.productModifierGroupRepository = productModifierGroupRepository;
+        this.orderPaymentRepository = orderPaymentRepository;
     }
 
     @Transactional
@@ -190,6 +193,12 @@ public class OrderService {
         order.setSubTotal(finalOrderSubtotal);
         order.setTotal(finalTotal);
         orderRepository.save(order);
+
+        OrderPayment orderPayment = new OrderPayment();
+        orderPayment.setStatus(PaymentStatus.UNPAID);
+        orderPayment.setMethod(orderCreateRequest.method());
+        orderPayment.setOrder(order);
+        orderPaymentRepository.save(orderPayment);
 
         List<OrderItemDto> itemDtos = orderItems.stream()
                 .map(item -> {

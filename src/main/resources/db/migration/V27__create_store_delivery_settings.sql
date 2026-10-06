@@ -3,11 +3,11 @@ CREATE TABLE store_delivery_settings
     id                      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     store_id                BIGINT         NOT NULL UNIQUE REFERENCES store (id),
     delivery_enabled        BOOLEAN        NOT NULL DEFAULT FALSE,
-    delivery_type           VARCHAR(20)    NOT NULL CHECK (delivery_type IN ('SAME_DAY')),
+    delivery_type           VARCHAR(20)    NOT NULL CHECK (delivery_type IN ('SAME_DAY', 'SCHEDULED')),
     min_order_price         NUMERIC(10, 2) NOT NULL,
     free_delivery_threshold NUMERIC(10, 2) NOT NULL,
     max_distance            NUMERIC(10, 2) NOT NULL,
-    delivery_geography      VARCHAR(100)   NOT NULL CHECK (delivery_geography IN ('ONLY_IN_THE_CITY')),
+    delivery_geography      VARCHAR(100)   NOT NULL CHECK (delivery_geography IN ('ONLY_IN_THE_CITY', 'CITY_AND_SUBURBS')),
     created_at              TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );

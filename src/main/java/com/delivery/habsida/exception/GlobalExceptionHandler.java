@@ -366,5 +366,72 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
+    @ExceptionHandler(StoreDeliverySettingAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerStoreDeliverySettingAlreadyExists(StoreDeliverySettingAlreadyExistsException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(StoreDeliverySettingNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerStoreDeliverySettingNotFoundException(StoreDeliverySettingNotFoundException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(StoreDeliveryAreaNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerStoreDeliveryAreaException(StoreDeliveryAreaNotFoundException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(StoreDeliveryAreaAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerStoreDeliveryAreaAlreadyExistException(StoreDeliveryAreaAlreadyExistsException ex,
+                                                                       HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(StoreDeliveryRestrictionNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerStoreDeliveryRestrictionNotFoundException(StoreDeliveryRestrictionNotFoundException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(StoreDeliveryRestrictionAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerStoreDeliveryRestrictionAlreadyExistException(StoreDeliveryRestrictionAlreadyExistsException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
 }
 

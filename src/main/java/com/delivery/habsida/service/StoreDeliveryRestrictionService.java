@@ -81,7 +81,7 @@ public class StoreDeliveryRestrictionService {
         }
         restriction.setRestrictedArea(request.restrictedArea());
 
-        return StoreDeliveryRestrictionResponse.from(restriction);
+        return StoreDeliveryRestrictionResponse.from(storeDeliveryRestrictionRepository.save(restriction));
     }
 
     @Transactional

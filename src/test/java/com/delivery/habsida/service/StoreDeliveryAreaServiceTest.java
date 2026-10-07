@@ -160,4 +160,24 @@ public class StoreDeliveryAreaServiceTest {
 
         verify(storeDeliveryAreaRepository, never()).save(any());
     }
+
+    @Test
+    void deleteStoreDeliveryArea_success() {
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(storeDeliveryAreaRepository.findByIdAndStoreId(5L, 1L)).thenReturn(Optional.of(storeDeliveryArea));
+
+        storeDeliveryAreaService.deleteStoreDeliveryArea(1L, 5L);
+
+        verify(storeDeliveryAreaRepository).delete(storeDeliveryArea);
+    }
+
+    @Test
+    void deleteStoreDeliveryArea_shouldThrowException_whenStoreNotFound() {
+        when(storeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(StoreNotFoundException.class,
+                () -> storeDeliveryAreaService.deleteStoreDeliveryArea(1L, 5L));
+
+        verify(storeDeliveryAreaRepository, never()).delete(any());
+    }
 }

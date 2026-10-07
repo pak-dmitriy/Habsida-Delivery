@@ -126,22 +126,23 @@ public class StoreDeliverySettingServiceTest {
 
         StoreDeliverySettingRequest updatedRequest = new StoreDeliverySettingRequest(
                 false,
-                DeliveryType.SAME_DAY,
+                DeliveryType.SCHEDULED,
                 new BigDecimal("20.00"),
                 new BigDecimal("20.00"),
                 new BigDecimal("30.00"),
-                DeliveryGeography.ONLY_IN_THE_CITY
+                DeliveryGeography.CITY_AND_SUBURBS
         );
 
         StoreDeliverySettingResponse response = storeDeliverySettingService.updateStoreDeliverySetting(1L, updatedRequest);
 
         verify(storeDeliverySettingRepository).save(any());
+
         assertEquals(false, response.deliveryEnabled());
-        assertEquals(DeliveryType.SAME_DAY, response.deliveryType());
+        assertEquals(DeliveryType.SCHEDULED, response.deliveryType());
         assertEquals(new BigDecimal("20.00"), response.minOrderPrice());
         assertEquals(new BigDecimal("20.00"), response.freeDeliveryThreshold());
         assertEquals(new BigDecimal("30.00"), response.maxDistance());
-        assertEquals(DeliveryGeography.ONLY_IN_THE_CITY, response.deliveryGeography());
+        assertEquals(DeliveryGeography.CITY_AND_SUBURBS, response.deliveryGeography());
     }
 
     @Test

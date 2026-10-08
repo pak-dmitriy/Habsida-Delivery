@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.LoginRequest;
 import com.delivery.habsida.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,9 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-class AuthControllerTest {
+class AuthControllerTest extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

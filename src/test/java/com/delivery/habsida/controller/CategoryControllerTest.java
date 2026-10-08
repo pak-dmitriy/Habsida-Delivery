@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.CategoryCreateRequest;
 import com.delivery.habsida.dto.CategoryDTO;
 import com.delivery.habsida.security.StoreAccessGuard;
@@ -22,9 +23,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-class CategoryControllerTest {
+class CategoryControllerTest extends AbstractIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 

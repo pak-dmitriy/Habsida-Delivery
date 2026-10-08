@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.ProductCreateRequest;
 import com.delivery.habsida.dto.ProductDto;
 import com.delivery.habsida.entity.ProductStatus;
@@ -26,9 +27,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-class ProductControllerTest {
+class ProductControllerTest extends AbstractIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;

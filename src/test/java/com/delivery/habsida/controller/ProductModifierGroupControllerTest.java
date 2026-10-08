@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
 import com.delivery.habsida.dto.ModifierOptionDto;
 import com.delivery.habsida.dto.ProductModifierGroupDto;
@@ -32,9 +33,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-public class ProductModifierGroupControllerTest {
+public class ProductModifierGroupControllerTest extends AbstractIntegrationTest {
     @Autowired
     MockMvc mockMvc;
 

@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.OrderPaymentDto;
 import com.delivery.habsida.dto.OrderPaymentRequest;
 import com.delivery.habsida.entity.PaymentMethod;
@@ -30,9 +31,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-public class OrderPaymentControllerTest {
+public class OrderPaymentControllerTest extends AbstractIntegrationTest {
     @Autowired
     MockMvc mockMvc;
 

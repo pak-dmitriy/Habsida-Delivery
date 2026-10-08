@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.ProductImageDto;
 import com.delivery.habsida.dto.ProductImageRequest;
 import com.delivery.habsida.security.StoreAccessGuard;
@@ -22,9 +23,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-class ProductImageControllerTest {
+class ProductImageControllerTest extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

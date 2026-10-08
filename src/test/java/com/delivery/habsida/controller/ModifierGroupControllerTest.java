@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.ModifierGroupDto;
 import com.delivery.habsida.dto.ModifierGroupRequest;
 import com.delivery.habsida.exception.InvalidQuantityException;
@@ -28,9 +29,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-public class ModifierGroupControllerTest {
+public class ModifierGroupControllerTest extends AbstractIntegrationTest {
     @Autowired
     MockMvc mockMvc;
 

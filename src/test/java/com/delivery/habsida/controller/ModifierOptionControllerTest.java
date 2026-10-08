@@ -1,5 +1,6 @@
 package com.delivery.habsida.controller;
 
+import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.ModifierOptionDto;
 import com.delivery.habsida.dto.ModifierOptionRequest;
 import com.delivery.habsida.exception.InvalidModifierOptionException;
@@ -30,9 +31,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@SpringBootTest
 @AutoConfigureMockMvc
-public class ModifierOptionControllerTest {
+public class ModifierOptionControllerTest extends AbstractIntegrationTest {
     @Autowired
     MockMvc mockMvc;
 

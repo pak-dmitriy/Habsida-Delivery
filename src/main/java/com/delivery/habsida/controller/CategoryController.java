@@ -4,13 +4,13 @@ import com.delivery.habsida.dto.CategoryCreateRequest;
 import com.delivery.habsida.dto.CategoryDTO;
 import com.delivery.habsida.service.CategoryService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 public class CategoryController {
@@ -23,8 +23,8 @@ public class CategoryController {
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     @GetMapping("/stores/{storeId}/categories")
-    public List<CategoryDTO> getCategories(@PathVariable Long storeId, Authentication authentication) {
-        return categoryService.getCategories(storeId, authentication);
+    public Page<CategoryDTO> getCategories(@PathVariable Long storeId, Pageable pageable, Authentication authentication) {
+        return categoryService.getCategories(storeId, pageable, authentication);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")

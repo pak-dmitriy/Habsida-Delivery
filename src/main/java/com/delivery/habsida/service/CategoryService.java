@@ -8,11 +8,13 @@ import com.delivery.habsida.exception.CategoryNotFoundException;
 import com.delivery.habsida.exception.StoreNotFoundException;
 import com.delivery.habsida.repository.CategoryRepository;
 import com.delivery.habsida.repository.StoreRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+
 
 @Service
 public class CategoryService {
@@ -25,8 +27,9 @@ public class CategoryService {
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<CategoryDTO> getCategories(Long storeId, Authentication authentication) {
-        return categoryRepository.findByStoreId(storeId).stream().map(CategoryDTO::from).toList();
+    public Page<CategoryDTO> getCategories(Long storeId, Pageable pageable, Authentication authentication) {
+        return categoryRepository.findByStoreId(storeId, pageable)
+                .map(CategoryDTO::from);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")

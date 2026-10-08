@@ -20,6 +20,7 @@ public record StoreDeliverySettingRequest(
         BigDecimal minOrderPrice,
 
         @NotNull (message = "Free delivery threshold can not be empty")
+        @PositiveOrZero (message = "Free delivery threshold price must be zero or positive")
         BigDecimal freeDeliveryThreshold,
 
         @NotNull (message = "Max distance can not be empty")

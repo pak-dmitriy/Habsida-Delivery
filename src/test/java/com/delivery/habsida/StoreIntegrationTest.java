@@ -1,7 +1,11 @@
 package com.delivery.habsida;
 
+import com.delivery.habsida.entity.Store;
+import com.delivery.habsida.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,5 +48,20 @@ public class StoreIntegrationTest extends AbstractIntegrationTest {
         .contentType(MediaType.APPLICATION_JSON)
                 .content(STORE_JSON))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getStores_shouldReturnOnlyOwnStores_whenUserIsMerchant() throws Exception {
+        User merchant = createUser("stores-merchant@test.com", "MERCHANT");
+        Store ownStore = createStore("own-store");
+        createStore("foreign-store");
+        giveAccess(merchant, ownStore);
+        String token = loginAndGetToken("stores-merchant@test.com");
+
+        mockMvc.perform(get("/api/stores")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].storeSlug").value("own-store"));
     }
 }

@@ -5,6 +5,7 @@ import com.delivery.habsida.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -63,5 +64,18 @@ public class StoreIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].storeSlug").value("own-store"));
+    }
+
+    @Test
+    void getStores_shouldReturnAllStores_whenUserIsAdmin() throws Exception {
+        createUser("stores-admin@test.com", "ADMIN");
+        createStore("admin-store-1");
+        createStore("admin-store-2");
+        String token = loginAndGetToken("stores-admin@test.com");
+
+        mockMvc.perform(get("/api/stores")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].storeSlug", hasItems("admin-store-1", "admin-store-2")));
     }
 }

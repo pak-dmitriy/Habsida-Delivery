@@ -78,13 +78,4 @@ public class StoreDeliverySettingService {
 
         return StoreDeliverySettingResponse.from(storeDeliverySettingRepository.save(storeDeliverySetting));
     }
-
-//    @Transactional
-//    public void deleteStoreDeliverySetting(Long storeId) {
-//        getStoreOrThrow(storeId);
-//
-//        StoreDeliverySetting storeDeliverySetting = getSettingOrThrow(storeId);
-//
-//        storeDeliverySettingRepository.delete(storeDeliverySetting);
-//    }
 }

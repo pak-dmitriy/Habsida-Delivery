@@ -1,6 +1,5 @@
 package com.delivery.habsida.security;
 
-import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.repository.UserStoreAccessRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +17,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class StoreAccessGuardTest extends AbstractIntegrationTest {
+class StoreAccessGuardTest {
 
     @Mock
     private UserStoreAccessRepository userStoreAccessRepository;

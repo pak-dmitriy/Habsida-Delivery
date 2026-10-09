@@ -1,20 +1,21 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
 import com.delivery.habsida.dto.ModifierOptionDto;
 import com.delivery.habsida.dto.ProductModifierGroupDto;
 import com.delivery.habsida.exception.ProductModifierGroupAlreadyExistsException;
 import com.delivery.habsida.exception.ProductModifierGroupNotFoundException;
 import com.delivery.habsida.exception.ProductNotFoundException;
+import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.StoreAccessGuard;
+import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.ProductModifierGroupService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -33,8 +34,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
-public class ProductModifierGroupControllerTest extends AbstractIntegrationTest {
+@WebMvcTest(ProductModifierGroupController.class)
+@Import(WebSecurityConfig.class)
+
+public class ProductModifierGroupControllerTest {
     @Autowired
     MockMvc mockMvc;
 
@@ -43,8 +46,11 @@ public class ProductModifierGroupControllerTest extends AbstractIntegrationTest 
     @MockitoBean
     private ProductModifierGroupService productModifierGroupService;
 
-    @MockitoBean
+    @MockitoBean(name = "storeAccessGuard")
     private StoreAccessGuard storeAccessGuard;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {

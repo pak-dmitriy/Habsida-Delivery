@@ -1,6 +1,5 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.OrderPaymentDto;
 import com.delivery.habsida.dto.OrderPaymentRequest;
 import com.delivery.habsida.entity.PaymentMethod;
@@ -8,20 +7,22 @@ import com.delivery.habsida.entity.PaymentStatus;
 import com.delivery.habsida.exception.OrderNotFoundException;
 import com.delivery.habsida.exception.PaymentNotFoundException;
 import com.delivery.habsida.exception.TransactionNotFoundException;
+import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.StoreAccessGuard;
+import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.OrderPaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
 
 import java.time.LocalDateTime;
 
@@ -31,8 +32,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
-public class OrderPaymentControllerTest extends AbstractIntegrationTest {
+@WebMvcTest(OrderPaymentController.class)
+@Import(WebSecurityConfig.class)
+
+public class OrderPaymentControllerTest {
     @Autowired
     MockMvc mockMvc;
 
@@ -41,11 +44,12 @@ public class OrderPaymentControllerTest extends AbstractIntegrationTest {
     @MockitoBean
     private OrderPaymentService orderPaymentService;
 
-    @MockitoBean
+    @MockitoBean(name = "storeAccessGuard")
     private StoreAccessGuard storeAccessGuard;
-    @Autowired
-    private ContentNegotiatingViewResolver contentNegotiatingViewResolver;
 
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {

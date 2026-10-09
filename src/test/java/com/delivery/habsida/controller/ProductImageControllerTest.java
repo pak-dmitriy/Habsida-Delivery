@@ -1,15 +1,16 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.AbstractIntegrationTest;
 import com.delivery.habsida.dto.ProductImageDto;
 import com.delivery.habsida.dto.ProductImageRequest;
+import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.StoreAccessGuard;
+import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.ProductImageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,8 +24,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
-class ProductImageControllerTest extends AbstractIntegrationTest {
+@WebMvcTest(ProductImageController.class)
+@Import(WebSecurityConfig.class)
+
+class ProductImageControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -34,8 +37,11 @@ class ProductImageControllerTest extends AbstractIntegrationTest {
     @MockitoBean
     private ProductImageService productImageService;
 
-    @MockitoBean
+    @MockitoBean(name = "storeAccessGuard")
     private StoreAccessGuard storeAccessGuard;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @WithMockUser
     @Test

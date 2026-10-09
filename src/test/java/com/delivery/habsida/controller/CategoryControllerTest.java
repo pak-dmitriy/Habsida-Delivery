@@ -2,13 +2,15 @@ package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.CategoryCreateRequest;
 import com.delivery.habsida.dto.CategoryDTO;
+import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.StoreAccessGuard;
+import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.CategoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,10 +23,10 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+@WebMvcTest(CategoryController.class)
+@Import(WebSecurityConfig.class)
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class CategoryControllerTest {
+class CategoryControllerTest  {
     @Autowired
     private MockMvc mockMvc;
 
@@ -33,8 +35,11 @@ class CategoryControllerTest {
     @MockitoBean
     private CategoryService categoryService;
 
-    @MockitoBean
+    @MockitoBean(name = "storeAccessGuard")
     private StoreAccessGuard storeAccessGuard;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @WithMockUser
     @Test

@@ -1,18 +1,20 @@
 package com.delivery.habsida.security;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@SpringBootTest()
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class PasswordEncoderTest {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Test
     public void encodePassword() {
-        System.out.println("Encoded password: " + passwordEncoder.encode("root"));
+        String encoded = passwordEncoder.encode("root");
+        System.out.println("Encoded password: " + encoded);
+
+        assertTrue(passwordEncoder.matches("root", encoded));
     }
 }

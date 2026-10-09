@@ -5,14 +5,16 @@ import com.delivery.habsida.dto.ModifierOptionRequest;
 import com.delivery.habsida.exception.InvalidModifierOptionException;
 import com.delivery.habsida.exception.ModifierGroupNotFoundException;
 import com.delivery.habsida.exception.ModifierOptionNotFoundException;
+import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.StoreAccessGuard;
+import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.ModifierOptionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -30,9 +32,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(ModifierOptionController.class)
+@Import(WebSecurityConfig.class)
 public class ModifierOptionControllerTest {
+
     @Autowired
     MockMvc mockMvc;
 
@@ -41,8 +44,11 @@ public class ModifierOptionControllerTest {
     @MockitoBean
     private ModifierOptionService modifierOptionService;
 
-    @MockitoBean
+    @MockitoBean(name = "storeAccessGuard")
     private StoreAccessGuard storeAccessGuard;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {

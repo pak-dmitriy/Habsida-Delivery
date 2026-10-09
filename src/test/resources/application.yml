@@ -1,0 +1,10 @@
+spring:
+  profiles:
+    active: test
+
+jwt:
+  secret: test-secret-key-for-integration-tests-min-32-bytes
+  expiration: 3600000
+
+cors:
+  allowed-origins: http://localhost:5173

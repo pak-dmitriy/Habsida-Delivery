@@ -1,18 +1,24 @@
 package com.delivery.habsida.security;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
 public class JwtServiceTest {
 
-    @Autowired
     private JwtService jwtService;
+
+    @BeforeEach
+    void setUp() {
+        jwtService = new JwtService();
+        ReflectionTestUtils.setField(jwtService, "secret", "unit-test-secret-key-with-at-least-32-bytes");
+        ReflectionTestUtils.setField(jwtService, "expiration", 3600000L);
+    }
+
     @Test
     public void shouldGenerateToken() {
         String token = jwtService.generateToken( 1L,"test@test.com", List.of("ADMIN"));

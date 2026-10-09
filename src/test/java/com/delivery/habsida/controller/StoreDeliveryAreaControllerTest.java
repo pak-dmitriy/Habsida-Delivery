@@ -5,7 +5,9 @@ import com.delivery.habsida.dto.StoreDeliveryAreaResponse;
 import com.delivery.habsida.exception.StoreDeliveryAreaAlreadyExistsException;
 import com.delivery.habsida.exception.StoreDeliveryAreaNotFoundException;
 import com.delivery.habsida.exception.StoreNotFoundException;
+import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.StoreAccessGuard;
+import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.StoreDeliveryAreaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -28,8 +32,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(StoreDeliveryAreaController.class)
+@Import(WebSecurityConfig.class)
 @WithMockUser
 public class StoreDeliveryAreaControllerTest {
     @Autowired
@@ -40,8 +44,11 @@ public class StoreDeliveryAreaControllerTest {
     @MockitoBean
     private StoreDeliveryAreaService storeDeliveryAreaService;
 
-    @MockitoBean
+    @MockitoBean(name = "storeAccessGuard")
     private StoreAccessGuard storeAccessGuard;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {

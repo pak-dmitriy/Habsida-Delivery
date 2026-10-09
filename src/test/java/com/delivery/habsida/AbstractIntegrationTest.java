@@ -56,6 +56,28 @@ public abstract class AbstractIntegrationTest {
     protected UserStoreAccessRepository userStoreAccessRepository;
     @Autowired
     private CustomerAddressRepository customerAddressRepository;
+    @Autowired
+    protected StoreDeliverySettingRepository storeDeliverySettingRepository;
+    @Autowired
+    protected StoreDeliveryAreaRepository storeDeliveryAreaRepository;
+
+    protected void createDeliverySetup(Store store) {
+        StoreDeliverySetting setting = new StoreDeliverySetting();
+        setting.setStore(store);
+        setting.setDeliveryEnabled(true);
+        setting.setDeliveryType(DeliveryType.SAME_DAY);
+        setting.setMinOrderPrice(BigDecimal.ZERO);
+        setting.setFreeDeliveryThreshold(BigDecimal.ZERO);
+        setting.setMaxDistance(new BigDecimal("10"));
+        setting.setDeliveryGeography(DeliveryGeography.ONLY_IN_THE_CITY);
+        storeDeliverySettingRepository.save(setting);
+
+        StoreDeliveryArea area = new StoreDeliveryArea();
+        area.setStore(store);
+        area.setDistrictName("City");
+        area.setDeliveryFee(new BigDecimal("5.00"));
+        storeDeliveryAreaRepository.save(area);
+    }
 
     protected User createUser(String email, String roleName) {
         User user = new User();
@@ -96,7 +118,9 @@ public abstract class AbstractIntegrationTest {
         store.setPickupAddress("street 1");
         store.setStatus(Status.ACTIVE);
         store.setDeliveryFee(new BigDecimal("5.00"));
-        return storeRepository.save(store);
+        Store saved = storeRepository.save(store);
+        createDeliverySetup(saved);
+        return saved;
     }
 
     protected void giveAccess(User user, Store store) {

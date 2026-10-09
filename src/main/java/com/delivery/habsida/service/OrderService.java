@@ -30,6 +30,9 @@ public class OrderService {
     private final OrderItemModifierRepository orderItemModifierRepository;
     private final ProductModifierGroupRepository productModifierGroupRepository;
     private final OrderPaymentRepository orderPaymentRepository;
+    private final StoreDeliverySettingRepository storeDeliverySettingRepository;
+    private final StoreDeliveryAreaRepository storeDeliveryAreaRepository;
+    private final StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository;
 
     public OrderService(OrderRepository orderRepository,
                         StoreRepository storeRepository,
@@ -40,7 +43,10 @@ public class OrderService {
                         ModifierOptionRepository modifierOptionRepository,
                         OrderItemModifierRepository orderItemModifierRepository,
                         ProductModifierGroupRepository productModifierGroupRepository,
-                        OrderPaymentRepository orderPaymentRepository) {
+                        OrderPaymentRepository orderPaymentRepository,
+                        StoreDeliverySettingRepository storeDeliverySettingRepository,
+                        StoreDeliveryAreaRepository storeDeliveryAreaRepository,
+                        StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository) {
         this.orderRepository = orderRepository;
         this.storeRepository = storeRepository;
         this.customerRepository = customerRepository;
@@ -51,6 +57,14 @@ public class OrderService {
         this.orderItemModifierRepository = orderItemModifierRepository;
         this.productModifierGroupRepository = productModifierGroupRepository;
         this.orderPaymentRepository = orderPaymentRepository;
+        this.storeDeliverySettingRepository = storeDeliverySettingRepository;
+        this.storeDeliveryAreaRepository = storeDeliveryAreaRepository;
+        this.storeDeliveryRestrictionRepository = storeDeliveryRestrictionRepository;
+    }
+
+    private StoreDeliveryArea getDistrictOrThrow(String districtName, Long storeId) {
+        return storeDeliveryAreaRepository.findByDistrictNameAndStoreId(districtName, storeId)
+                .orElseThrow(() -> new StoreDeliveryAreaNotFoundException("Area not found"));
     }
 
     @Transactional
@@ -105,9 +119,22 @@ public class OrderService {
             orderItems.add(orderItem);
             orderSubtotal = orderSubtotal.add(subtotal);
         }
+
         BigDecimal deliveryFee;
+        StoreDeliverySetting deliverySetting = null;
         if (orderCreateRequest.type() == OrderType.DELIVERY) {
-            deliveryFee = store.getDeliveryFee();
+           deliverySetting = storeDeliverySettingRepository.findByStoreId(storeId)
+                    .orElseThrow(() -> new StoreDeliverySettingNotFoundException("Delivery setting not found"));
+            if (!deliverySetting.getDeliveryEnabled()) {
+                throw new DeliveryNotAvailableException("Delivery not available");
+            }
+
+            if (storeDeliveryRestrictionRepository.existsByRestrictedAreaAndStoreId(customerAddress.getCity(), storeId) ) {
+                throw new DeliveryNotAvailableException("Delivery not available in this zone");
+            }
+
+            StoreDeliveryArea deliveryArea = getDistrictOrThrow(customerAddress.getCity(), storeId);
+            deliveryFee = deliveryArea.getDeliveryFee();
         } else {
             deliveryFee = BigDecimal.ZERO;
         }
@@ -188,6 +215,16 @@ public class OrderService {
         for (OrderItem item : orderItems) {
             finalOrderSubtotal = finalOrderSubtotal.add(item.getSubtotal());
         }
+
+        if(deliverySetting != null && finalOrderSubtotal.compareTo(deliverySetting.getMinOrderPrice()) < 0) {
+            throw new MinOrderPriceNotReachedException("Order total is below the minimum: " + deliverySetting.getMinOrderPrice());
+        }
+
+        if(deliverySetting != null && finalOrderSubtotal.compareTo(deliverySetting.getFreeDeliveryThreshold()) >= 0
+                && deliverySetting.getFreeDeliveryThreshold().compareTo(BigDecimal.ZERO) > 0) {
+            deliveryFee = BigDecimal.ZERO;
+        }
+        order.setDeliveryFee(deliveryFee);
 
         BigDecimal finalTotal = finalOrderSubtotal.add(deliveryFee).subtract(discountTotal);
         order.setSubTotal(finalOrderSubtotal);

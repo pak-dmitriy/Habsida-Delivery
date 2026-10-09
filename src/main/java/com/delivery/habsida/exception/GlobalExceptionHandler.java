@@ -433,5 +433,27 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
+    @ExceptionHandler(DeliveryNotAvailableException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerDeliveryNotAvailableException(DeliveryNotAvailableException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(MinOrderPriceNotReachedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerMinOrderPriceNotReachedException(MinOrderPriceNotReachedException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
 }
 

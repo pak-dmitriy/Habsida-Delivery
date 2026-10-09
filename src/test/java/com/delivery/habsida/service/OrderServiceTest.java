@@ -19,11 +19,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.delivery.habsida.entity.OrderType.DELIVERY;
+import static com.delivery.habsida.entity.OrderType.PICKUP;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -48,10 +49,15 @@ class OrderServiceTest {
     private ProductModifierGroupRepository productModifierGroupRepository;
     @Mock
     private OrderPaymentRepository orderPaymentRepository;
+    @Mock
+    private StoreDeliverySettingRepository storeDeliverySettingRepository;
+    @Mock
+    private StoreDeliveryAreaRepository storeDeliveryAreaRepository;
+    @Mock
+    private StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository;
 
     @InjectMocks
     private OrderService orderService;
-
 
     private Store store;
     private Customer customer;
@@ -62,51 +68,42 @@ class OrderServiceTest {
     private OrderItemModifier orderItemModifier;
     private ModifierGroup modifierGroup;
     private ProductModifierGroup productModifierGroup;
-
+    private StoreDeliverySetting storeDeliverySetting;
+    private StoreDeliveryArea storeDeliveryArea;
+    private StoreDeliveryRestriction storeDeliveryRestriction;
 
     @BeforeEach
     void setUp() {
-
         store = new Store();
-        customer = new Customer();
-        customerAddress = new CustomerAddress();
-        product = new Product();
-        order = new Order();
-        modifierOption = new ModifierOption();
-        orderItemModifier = new OrderItemModifier();
-        modifierGroup = new ModifierGroup();
-        productModifierGroup = new ProductModifierGroup();
-
-
         store.setId(1L);
-        store.setDeliveryFee(new BigDecimal("5.00"));
+
+        customer = new Customer();
         customer.setId(1L);
+
+        customerAddress = new CustomerAddress();
         customerAddress.setId(1L);
-        product.setId(1L);
-        product.setName("apple");
-        product.setPrice(new BigDecimal("10.00"));
-        product.setStore(store);
-        product.setStatus(ProductStatus.AVAILABLE);
-        product.setMaxQuantity(10);
-        product.setMinQuantity(1);
-        product.setStock(100);
+        customerAddress.setCity("City");
         customerAddress.setCustomer(customer);
+
+        order = new Order();
         order.setId(1L);
         order.setStore(store);
         order.setOrderStatus(OrderStatus.CREATED);
         order.setCustomer(customer);
         order.setCustomerAddress(customerAddress);
-        modifierOption.setId(1L);
-        modifierOption.setName("Double size");
-        modifierOption.setPriceDelta(new BigDecimal("10.2"));
+
+        orderItemModifier = new OrderItemModifier();
         orderItemModifier.setId(1L);
         orderItemModifier.setOptionName("Double size");
         orderItemModifier.setPriceDelta(new BigDecimal("10.2"));
-        modifierGroup.setId(1L);
-        modifierGroup.setMaxSelect(1);
-        modifierOption.setModifierGroup(modifierGroup);
-        productModifierGroup.setProduct(product);
-        productModifierGroup.setModifierGroup(modifierGroup);
+
+        storeDeliveryRestriction = new StoreDeliveryRestriction();
+        storeDeliveryRestriction.setRestrictedArea("City");
+
+        product = defaultProduct();
+        modifierGroup = defaultModifierGroup();
+        modifierOption = defaultOption(modifierGroup);
+        productModifierGroup = attachGroupToProduct(product, modifierGroup);
     }
 
     private OrderCreateRequest defaultRequest() {
@@ -120,9 +117,215 @@ class OrderServiceTest {
         );
     }
 
+    private StoreDeliverySetting defaultSetting() {
+        StoreDeliverySetting setting = new StoreDeliverySetting();
+        setting.setStore(store);
+        setting.setDeliveryEnabled(true);
+        setting.setDeliveryType(DeliveryType.SAME_DAY);
+        setting.setMinOrderPrice(new BigDecimal("10.0"));
+        setting.setFreeDeliveryThreshold(new BigDecimal("50.0"));
+        setting.setMaxDistance(new BigDecimal("30.0"));
+        setting.setDeliveryGeography(DeliveryGeography.ONLY_IN_THE_CITY);
+
+        return setting;
+    }
+
+    private StoreDeliveryArea defaultArea() {
+        StoreDeliveryArea area = new StoreDeliveryArea();
+        area.setStore(store);
+        area.setDistrictName("City");
+        area.setDeliveryFee(new BigDecimal("10.0"));
+
+        return area;
+    }
+
+    private Product defaultProduct() {
+        Product product1 = new Product();
+        product1.setId(1L);
+        product1.setName("apple");
+        product1.setPrice(new BigDecimal("10.00"));
+        product1.setStore(store);
+        product1.setStatus(ProductStatus.AVAILABLE);
+        product1.setMaxQuantity(10);
+        product1.setMinQuantity(1);
+        product1.setStock(100);
+
+        return product1;
+    }
+
+    private ModifierGroup defaultModifierGroup() {
+        ModifierGroup group = new ModifierGroup();
+        group.setId(1L);
+        group.setMaxSelect(1);
+
+        return group;
+    }
+
+    private ModifierOption defaultOption(ModifierGroup group) {
+        ModifierOption option = new ModifierOption();
+        option.setId(1L);
+        option.setName("Double size");
+        option.setPriceDelta(new BigDecimal("10.2"));
+        option.setModifierGroup(group);
+
+        return option;
+    }
+
+    private ProductModifierGroup attachGroupToProduct(Product product, ModifierGroup group) {
+        ProductModifierGroup productModifierGroup1 = new ProductModifierGroup();
+        productModifierGroup1.setProduct(product);
+        productModifierGroup1.setModifierGroup(group);
+
+        return productModifierGroup1;
+    }
+
     @Test
     void createOrder() {
         OrderCreateRequest request = defaultRequest();
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
+        when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
+        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+
+        OrderDTO result = orderService.createOrder(1L, request);
+
+        assertEquals(new BigDecimal("50.40"), result.total());
+        assertEquals(1, result.orderItems().size());
+        assertEquals("apple", result.orderItems().get(0).productName());
+        assertEquals("1", result.orderNumber());
+
+        verify(orderPaymentRepository).save(any(OrderPayment.class));
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenDeliveryNotAvailable() {
+        storeDeliverySetting = defaultSetting();
+        storeDeliverySetting.setDeliveryEnabled(false);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+
+        assertThrows(DeliveryNotAvailableException.class,
+                () -> orderService.createOrder(1L, defaultRequest()));
+
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenCityInDeliveryRestriction() {
+        storeDeliverySetting = defaultSetting();
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryRestrictionRepository.existsByRestrictedAreaAndStoreId("City", 1L)).thenReturn(true);
+
+        assertThrows(DeliveryNotAvailableException.class,
+                () -> orderService.createOrder(1L, defaultRequest()));
+
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whereDeliveryAreaNotFound() {
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
+
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId("City", 1L)).thenReturn(Optional.empty());
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+
+        assertThrows(StoreDeliveryAreaNotFoundException.class,
+                () -> orderService.createOrder(1L, defaultRequest()));
+
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenMinOrderPriceNotReached() {
+        storeDeliveryArea = defaultArea();
+        storeDeliverySetting = defaultSetting();
+        storeDeliverySetting.setMinOrderPrice(new BigDecimal("100.0"));
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryRestrictionRepository.existsByRestrictedAreaAndStoreId(customerAddress.getCity(), 1L)).thenReturn(false);
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
+        when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
+        when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
+        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+
+        assertThrows(MinOrderPriceNotReachedException.class,
+                () -> orderService.createOrder(1L, defaultRequest()));
+
+        verify(orderRepository).save(any());
+    }
+
+    @Test
+    void creatOrder_success_whenDeliveryIsFree() {
+        OrderCreateRequest request = defaultRequest();
+        storeDeliverySetting = defaultSetting();
+        storeDeliverySetting.setFreeDeliveryThreshold(new BigDecimal("40.40"));
+        storeDeliveryArea = defaultArea();
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
+        when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
+        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+
+        OrderDTO result = orderService.createOrder(1L, request);
+
+        assertEquals(new BigDecimal("40.40"), result.total());
+        assertEquals(1, result.orderItems().size());
+        assertEquals("apple", result.orderItems().get(0).productName());
+        assertEquals("1", result.orderNumber());
+
+        verify(orderPaymentRepository).save(any(OrderPayment.class));
+    }
+
+    @Test
+    void creatOrder_success_whenDeliveryTypeIsPickUp() {
+        OrderCreateRequest updateDeliveryType = new OrderCreateRequest(
+                PICKUP,
+                PaymentMethod.CASH,
+                "Good",
+                1L,
+                1L,
+                List.of(new OrderItemRequest(1L, 2, List.of(1L)))
+        );
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -134,18 +337,38 @@ class OrderServiceTest {
         when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderDTO result = orderService.createOrder(1L, updateDeliveryType);
 
-        assertEquals(new BigDecimal("45.40"), result.total());
+        assertEquals(new BigDecimal("40.40"), result.total());
         assertEquals(1, result.orderItems().size());
         assertEquals("apple", result.orderItems().get(0).productName());
         assertEquals("1", result.orderNumber());
-        verify(orderPaymentRepository).save(any(OrderPayment.class));
+
+        verify(storeDeliverySettingRepository, never()).findByStoreId(anyLong());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenDeliverySettingNotFound() {
+        storeDeliverySetting = defaultSetting();
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.empty());
+
+        assertThrows(StoreDeliverySettingNotFoundException.class,
+                () -> orderService.createOrder(1L, defaultRequest()));
+
+        verify(orderRepository, never()).save(any());
     }
 
     @Test
     void createOrder_shouldCreateOrderItemModifier_whenModifierOptionSelected() {
         OrderCreateRequest request = defaultRequest();
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -156,9 +379,11 @@ class OrderServiceTest {
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(orderItemModifierRepository.findByOrderItemId(any())).thenReturn(List.of(orderItemModifier));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
-
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
         OrderDTO result = orderService.createOrder(1L, request);
+
         assertEquals(1, result.orderItems().get(0).orderItemModifiers().size());
         assertEquals("Double size", result.orderItems().get(0).orderItemModifiers().get(0).optionName());
         assertEquals(new BigDecimal("10.2"), result.orderItems().get(0).orderItemModifiers().get(0).priceDelta());
@@ -167,6 +392,8 @@ class OrderServiceTest {
     @Test
     void createOrder_shouldThrowException_whereModifierOptionNotFound() {
         OrderCreateRequest request = defaultRequest();
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -175,6 +402,8 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.empty());
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
         assertThrows(ModifierOptionNotFoundException.class,
                 () -> orderService.createOrder(1L, request));
@@ -220,6 +449,9 @@ class OrderServiceTest {
 
     @Test
     void createOrder_shouldGenerateCorrectOrderNumber_whenStoreHasExistingOrders() {
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
+
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
@@ -228,9 +460,11 @@ class OrderServiceTest {
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(6L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
-
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
         OrderDTO result = orderService.createOrder(1L, defaultRequest());
+
         assertEquals("6", result.orderNumber());
     }
 
@@ -483,6 +717,8 @@ class OrderServiceTest {
     void createOrder_shouldApplyDiscount_whenProductHasDiscount() {
         product.setDiscountPercent(20);
         OrderCreateRequest request = defaultRequest();
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -492,16 +728,20 @@ class OrderServiceTest {
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
         OrderDTO result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("4.00"), result.discountTotal());
-        assertEquals(new BigDecimal("41.40"), result.total());
+        assertEquals(new BigDecimal("46.40"), result.total());
     }
 
     @Test
     void createOrder_shouldHaveZeroDiscount_whenProductHasNoDiscount() {
         OrderCreateRequest request = defaultRequest();
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -511,17 +751,21 @@ class OrderServiceTest {
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
         OrderDTO result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("0.00"), result.discountTotal());
-        assertEquals(new BigDecimal("45.40"), result.total());
+        assertEquals(new BigDecimal("50.40"), result.total());
     }
 
     @Test
     void createOrder_shouldRoundDiscountToTwoDecimals_whenDivisionIsNotExact() {
         product.setPrice(new BigDecimal("10.01"));
         product.setDiscountPercent(33);
+        storeDeliverySetting = defaultSetting();
+        storeDeliveryArea = defaultArea();
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -531,7 +775,8 @@ class OrderServiceTest {
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
-
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
         OrderDTO result = orderService.createOrder(1L, defaultRequest());
 
         assertEquals(new BigDecimal("6.60"), result.discountTotal());
@@ -541,12 +786,21 @@ class OrderServiceTest {
     void createOrder_shouldApplySameTotalDiscount_regardlessOfItemSplitting() {
         product.setPrice(new BigDecimal("0.01"));
         product.setDiscountPercent(50);
+        storeDeliverySetting = defaultSetting();
+        storeDeliverySetting.setMinOrderPrice(new BigDecimal("0"));
+        storeDeliveryArea = defaultArea();
 
         OrderCreateRequest oneLinesRequest = new OrderCreateRequest(
-                DELIVERY, PaymentMethod.CASH, "Good", 1L,
-                1L, List.of(
-                new OrderItemRequest(1L, 2, List.of())
-        )
+                DELIVERY,
+                PaymentMethod.CASH,
+                "Good",
+                1L,
+                1L,
+                List.of(new OrderItemRequest(
+                        1L,
+                        2,
+                        List.of())
+                )
         );
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -554,16 +808,23 @@ class OrderServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
+        when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
         OrderDTO oneLineResult = orderService.createOrder(1L, oneLinesRequest);
 
         when(productRepository.decreaseStockAndGet(1L, 1)).thenReturn(List.of(99));
+
         OrderCreateRequest twoLinesRequest = new OrderCreateRequest(
-                DELIVERY, PaymentMethod.CASH, "Good", 1L,
-                1L, List.of(
-                new OrderItemRequest(1L, 1, List.of()),
-                new OrderItemRequest(1L, 1, List.of())
-        )
+                DELIVERY,
+                PaymentMethod.CASH,
+                "Good",
+                1L,
+                1L,
+                List.of(
+                        new OrderItemRequest(1L, 1, List.of()),
+                        new OrderItemRequest(1L, 1, List.of())
+                )
         );
         OrderDTO twoLinesResult = orderService.createOrder(1L, twoLinesRequest);
 

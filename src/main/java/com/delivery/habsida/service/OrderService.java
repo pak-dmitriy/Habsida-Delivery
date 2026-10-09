@@ -191,7 +191,6 @@ public class OrderService {
                     orderItemModifier.setOrderItem(item);
                     orderItemModifierRepository.save(orderItemModifier);
                 }
-
             }
 
             for (ProductModifierGroup productModifierGroup : productModifierGroupRepository.findByProductId(product.getId())) {

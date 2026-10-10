@@ -47,7 +47,6 @@ public class ProductService {
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public ProductDto createProduct(Long storeId, ProductCreateRequest request) {
-
         if (request.minQuantity() > request.maxQuantity()) {
             throw new InvalidQuantityException("MinQuantity cannot be greater than MaxQuantity");
         }
@@ -76,7 +75,6 @@ public class ProductService {
 
         return ProductDto.from(productRepository.save(product));
     }
-
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public Page<ProductDto> getProducts(Long storeId, Long categoryId, ProductStatus status, Pageable pageable) {
@@ -108,7 +106,6 @@ public class ProductService {
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public ProductDto updateProduct(Long storeId, Long productId, ProductCreateRequest request) {
-
         if (request.minQuantity() > request.maxQuantity()) {
             throw new InvalidQuantityException("MinQuantity cannot be greater than MaxQuantity");
         }
@@ -137,7 +134,6 @@ public class ProductService {
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public void deleteProduct(Long storeId, Long productId) {
-
         Product product = getProductOrThrow(storeId, productId);
 
         productRepository.delete(product);

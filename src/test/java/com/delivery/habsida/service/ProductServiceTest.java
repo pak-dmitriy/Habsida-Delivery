@@ -113,6 +113,8 @@ class ProductServiceTest {
         assertEquals(100, result.maxQuantity());
         assertEquals(5, result.minQuantity());
         assertEquals(1L, result.categoryId());
+
+        verify(productRepository).save(any());
     }
 
     @Test

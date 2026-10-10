@@ -1,6 +1,7 @@
 package com.delivery.habsida.dto;
 
 import com.delivery.habsida.entity.Status;
+import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.TypeStoreServices;
 
 import java.math.BigDecimal;
@@ -16,4 +17,19 @@ public record StoreResponse(
         Status status,
         String pickupAddress,
         BigDecimal deliveryFee
-) {}
+) {
+    public static StoreResponse from(Store store) {
+        return new StoreResponse(
+                store.getId(),
+                store.getName(),
+                store.getStoreSlug(),
+                store.getDescription(),
+                store.getTypeStoreServices(),
+                store.getPhone(),
+                store.getLogo(),
+                store.getStatus(),
+                store.getPickupAddress(),
+                store.getDeliveryFee()
+        );
+    }
+}

@@ -101,12 +101,15 @@ class CategoryControllerTest {
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(categoryService, never()).updateCategory(anyLong(), anyLong(), any());
+        verify(categoryService, never()).createCategory(anyLong(), any());
     }
 
     @Test
     void getAllCategories_shouldReturnListOfCategories() throws Exception {
-        when(categoryService.getCategories(anyLong(), any(Pageable.class), any())).thenReturn(new PageImpl<>(List.of(defaultResponse())));
+        when(categoryService.getCategories(
+                anyLong(),
+                any(Pageable.class),
+                any())).thenReturn(new PageImpl<>(List.of(defaultResponse())));
 
         mockMvc.perform(get("/stores/{storeId}/categories", 1L))
                 .andExpect(status().isOk())

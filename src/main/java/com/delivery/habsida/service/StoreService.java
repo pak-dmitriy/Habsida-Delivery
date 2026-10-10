@@ -1,7 +1,6 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.StoreCreateRequest;
-import com.delivery.habsida.dto.StoreCreateResponse;
 import com.delivery.habsida.dto.StoreResponse;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.UserStoreAccess;
@@ -9,15 +8,16 @@ import com.delivery.habsida.exception.StoreNotFoundException;
 import com.delivery.habsida.repository.StoreRepository;
 import com.delivery.habsida.repository.UserStoreAccessRepository;
 import com.delivery.habsida.security.UserPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
+@Transactional(readOnly = true)
 @Service
 public class StoreService {
-
     private final StoreRepository storeRepository;
     private final UserStoreAccessRepository userStoreAccessRepository;
 
@@ -26,34 +26,9 @@ public class StoreService {
         this.userStoreAccessRepository = userStoreAccessRepository;
     }
 
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public StoreResponse getStore(Long storeId) {
-        Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new StoreNotFoundException("Store not found"));
-        return toResponse(store);
-    }
-
-    public List<StoreResponse> getStores(Authentication authentication) {
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (isAdmin) {
-            return storeRepository.findAll().stream()
-                    .map(this::toResponse)
-                    .toList();
-        }
-
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        List<UserStoreAccess> userStoreAccesses = userStoreAccessRepository.findByUserId(userPrincipal.userId());
-
-        return userStoreAccesses.stream()
-                .map(UserStoreAccess::getStore)
-                .map(this::toResponse)
-                .toList();
-    }
-
+    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public StoreCreateResponse createStore(StoreCreateRequest storeCreateRequest) {
-        // 1. Создаем сущность из реквеста
+    public StoreResponse createStore(StoreCreateRequest storeCreateRequest) {
         Store store = new Store();
 
         store.setName(storeCreateRequest.name());
@@ -66,36 +41,32 @@ public class StoreService {
         store.setPickupAddress(storeCreateRequest.pickupAddress());
         store.setDeliveryFee(storeCreateRequest.deliveryFee());
 
-        // 2. Сохраняем в базу (получаем ID)
         Store savedStore = storeRepository.save(store);
 
-        return new StoreCreateResponse(
-                savedStore.getId(),
-                savedStore.getName(),
-                savedStore.getStoreSlug(),
-                savedStore.getDescription(),
-                savedStore.getTypeStoreServices(),
-                savedStore.getPhone(),
-                savedStore.getLogo(),
-                savedStore.getStatus(),
-                savedStore.getPickupAddress(),
-                savedStore.getDeliveryFee()
-        );
+        return StoreResponse.from(savedStore);
     }
 
-    private StoreResponse toResponse(Store store) {
-        return new StoreResponse(
-                store.getId(),
-                store.getName(),
-                store.getStoreSlug(),
-                store.getDescription(),
-                store.getTypeStoreServices(),
-                store.getPhone(),
-                store.getLogo(),
-                store.getStatus(),
-                store.getPickupAddress(),
-                store.getDeliveryFee()
-        );
+    public Page<StoreResponse> getStores(Authentication authentication, Pageable pageable) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            return storeRepository.findAll(pageable)
+                    .map(StoreResponse::from);
+        }
+
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        Page<UserStoreAccess> userStoreAccesses = userStoreAccessRepository.findByUserId(userPrincipal.userId(), pageable);
+
+        return userStoreAccesses
+                .map(UserStoreAccess::getStore)
+                .map(StoreResponse::from);
     }
 
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    public StoreResponse getStore(Long storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new StoreNotFoundException("Store not found"));
+
+        return StoreResponse.from(store);
+    }
 }

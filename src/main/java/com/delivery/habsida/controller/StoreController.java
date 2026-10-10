@@ -1,17 +1,16 @@
 package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.StoreCreateRequest;
-import com.delivery.habsida.dto.StoreCreateResponse;
 import com.delivery.habsida.dto.StoreResponse;
 import com.delivery.habsida.service.StoreService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/stores")
@@ -24,8 +23,8 @@ public class StoreController {
     }
 
     @GetMapping
-    public List<StoreResponse> getStores(Authentication authentication) {
-        return storeService.getStores(authentication);
+    public Page<StoreResponse> getStores(Authentication authentication, Pageable pageable) {
+        return storeService.getStores(authentication, pageable);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
@@ -36,8 +35,8 @@ public class StoreController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<StoreCreateResponse> createStore(@RequestBody @Valid StoreCreateRequest storeCreateRequest) {
-        StoreCreateResponse response = storeService.createStore(storeCreateRequest);
+    public ResponseEntity<StoreResponse> createStore(@RequestBody @Valid StoreCreateRequest storeCreateRequest) {
+        StoreResponse response = storeService.createStore(storeCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

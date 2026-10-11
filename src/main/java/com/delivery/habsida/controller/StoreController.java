@@ -22,6 +22,13 @@ public class StoreController {
         this.storeService = storeService;
     }
 
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<StoreResponse> createStore(@RequestBody @Valid StoreCreateRequest storeCreateRequest) {
+        StoreResponse response = storeService.createStore(storeCreateRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @GetMapping
     public Page<StoreResponse> getStores(Authentication authentication, Pageable pageable) {
         return storeService.getStores(authentication, pageable);
@@ -31,12 +38,5 @@ public class StoreController {
     @GetMapping("/{storeId}")
     public StoreResponse getStore(@PathVariable Long storeId) {
         return storeService.getStore(storeId);
-    }
-
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<StoreResponse> createStore(@RequestBody @Valid StoreCreateRequest storeCreateRequest) {
-        StoreResponse response = storeService.createStore(storeCreateRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

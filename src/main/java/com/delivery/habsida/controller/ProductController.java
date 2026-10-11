@@ -20,7 +20,7 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @PostMapping("/{productId}")
+    @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@PathVariable Long storeId,
                                                          @RequestBody @Valid ProductCreateRequest request) {
         ProductResponse created = productService.createProduct(storeId, request);

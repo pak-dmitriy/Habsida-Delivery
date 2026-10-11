@@ -5,7 +5,9 @@ import com.delivery.habsida.dto.StoreDeliverySettingResponse;
 import com.delivery.habsida.entity.DeliveryGeography;
 import com.delivery.habsida.entity.DeliveryType;
 import com.delivery.habsida.exception.StoreDeliverySettingNotFoundException;
+import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.StoreAccessGuard;
+import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.StoreDeliverySettingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -27,8 +31,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(StoreDeliverySettingController.class)
+@Import(WebSecurityConfig.class)
 @WithMockUser
 public class StoreDeliverySettingControllerTest {
     @Autowired
@@ -39,8 +43,11 @@ public class StoreDeliverySettingControllerTest {
     @MockitoBean
     private StoreDeliverySettingService storeDeliverySettingService;
 
-    @MockitoBean
+    @MockitoBean(name = "storeAccessGuard")
     private StoreAccessGuard storeAccessGuard;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {

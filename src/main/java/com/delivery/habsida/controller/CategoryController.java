@@ -13,8 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/stores/{storeId}/categories")
 public class CategoryController {
-
     private final CategoryService categoryService;
 
     public CategoryController(CategoryService categoryService) {
@@ -22,13 +22,7 @@ public class CategoryController {
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    @GetMapping("/stores/{storeId}/categories")
-    public Page<CategoryResponse> getCategories(@PathVariable Long storeId, Pageable pageable, Authentication authentication) {
-        return categoryService.getCategories(storeId, pageable, authentication);
-    }
-
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    @PostMapping("/stores/{storeId}/categories")
+    @PostMapping
     public ResponseEntity<CategoryResponse> createCategory
             (@PathVariable Long storeId,
              @RequestBody @Valid CategoryCreateRequest categoryCreateRequest) {
@@ -37,7 +31,13 @@ public class CategoryController {
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    @PutMapping("/stores/{storeId}/categories/{categoryId}")
+    @GetMapping
+    public Page<CategoryResponse> getCategories(@PathVariable Long storeId, Pageable pageable, Authentication authentication) {
+        return categoryService.getCategories(storeId, pageable, authentication);
+    }
+
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    @PutMapping("/{categoryId}")
     public ResponseEntity<CategoryResponse> updateCategory
             (@PathVariable Long storeId, @PathVariable Long categoryId,
              @RequestBody @Valid CategoryCreateRequest categoryCreateRequest) {
@@ -46,11 +46,10 @@ public class CategoryController {
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    @DeleteMapping("/stores/{storeId}/categories/{categoryId}")
+    @DeleteMapping("/{categoryId}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long storeId,
                                                @PathVariable Long categoryId) {
         categoryService.deleteCategory(storeId, categoryId);
         return ResponseEntity.noContent().build();
     }
-
 }

@@ -2,7 +2,7 @@ package com.delivery.habsida.dto;
 
 import com.delivery.habsida.entity.CustomerAddress;
 
-public record CustomerAddressDTO (
+public record CustomerAddressResponse(
         Long id,
         String city,
         String street,
@@ -11,8 +11,8 @@ public record CustomerAddressDTO (
         Long customerId
 
 ){
-   public static CustomerAddressDTO from (CustomerAddress customerAddress){
-      return  new CustomerAddressDTO (
+   public static CustomerAddressResponse from (CustomerAddress customerAddress){
+      return  new CustomerAddressResponse(
               customerAddress.getId(),
               customerAddress.getCity(),
               customerAddress.getStreet(),

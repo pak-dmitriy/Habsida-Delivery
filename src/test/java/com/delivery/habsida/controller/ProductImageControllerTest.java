@@ -1,27 +1,28 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ProductImageResponse;
 import com.delivery.habsida.dto.ProductImageRequest;
+import com.delivery.habsida.dto.ProductImageResponse;
+import com.delivery.habsida.exception.ImageNotFoundException;
 import com.delivery.habsida.security.JwtService;
-import com.delivery.habsida.security.StoreAccessGuard;
 import com.delivery.habsida.security.WebSecurityConfig;
 import com.delivery.habsida.service.ProductImageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -73,46 +74,66 @@ class ProductImageControllerTest {
 
     @Test
     void createProductImage_shouldReturn400_whenImagePhotoIsBlank() throws Exception {
-        ProductImageRequest invalidRequest = new ProductImageRequest(" ", 5);
+        ProductImageRequest invalidRequest = new ProductImageRequest(
+                " ",
+                5);
 
-        mockMvc.perform(post("/stores/{storeId}/products/{productId}/images", 1L, 1L)
+        mockMvc.perform(post("/stores/{storeId}/products/{productId}/images", 1L, 5L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
+
+        verify(productImageService, never()).createImages(anyLong(), anyLong(), any());
     }
 
     @Test
-    void createProductImage_shouldReturn400_whenSortOrderIsBlank() throws Exception {
+    void createProductImage_shouldReturn400_whenSortOrderIsNegative() throws Exception {
         ProductImageRequest invalidRequest = new ProductImageRequest(
                 "imagePhoto",
                 -5
         );
 
-        mockMvc.perform(post("/stores/{storeId}/products/{productId}/images", 1L, 1L)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
+        mockMvc.perform(post("/stores/{storeId}/products/{productId}/images", 1L, 5L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
+
+        verify(productImageService, never()).createImages(anyLong(), anyLong(), any());
     }
 
     @Test
-    void getProductImages_shouldReturnListOfProductImages() throws Exception {
-        ProductImageResponse dto = new ProductImageResponse(
-                1L,
-                "imagePhoto",
-                5
-        );
+    void getProductImages_shouldReturnPageOfProductImages() throws Exception {
         when(productImageService.getProductImages(
                 anyLong(),
-                anyLong())).thenReturn(List.of(dto));
+                anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(defaultResponse())));
 
-        mockMvc.perform(get("/stores/{storeId}/products/{productId}/images", 1L, 1L))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/stores/{storeId}/products/{productId}/images", 1L, 5L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].imagePhoto").value("image"))
+                .andExpect(jsonPath("$.content[0].sortOrder").value(0));
+
+        verify(productImageService).getProductImages(eq(1L), eq(5L), any(Pageable.class));
     }
 
     @Test
     void deleteProductImages_shouldReturn204_whenRequestIsValid() throws Exception {
         mockMvc.perform(delete("/stores/{storeId}/products/{productId}/images/{imageId}",
-                        1L, 1L, 1L))
+                        1L, 5L, 1L))
                 .andExpect(status().isNoContent());
+
+        verify(productImageService).deleteProductImages(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void deleteProductImages_shouldReturn404_whenImageNotFound() throws Exception {
+        doThrow(new ImageNotFoundException("Image not found"))
+                .when(productImageService).deleteProductImages(anyLong(), anyLong(), anyLong());
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/stores/{storeId}/products/{productId}/images/{imageId}",
+                        1L, 5L, 1L))
+                .andExpect(status().isNotFound());
+
+        verify(productImageService).deleteProductImages(anyLong(), anyLong(), anyLong());
     }
 }

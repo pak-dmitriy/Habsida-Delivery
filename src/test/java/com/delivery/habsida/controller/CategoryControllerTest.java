@@ -49,7 +49,6 @@ class CategoryControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
-    @WithMockUser
     @BeforeEach
     void setUp() {
         when(storeAccessGuard.canAccessStore(any(), anyLong())).thenReturn(true);

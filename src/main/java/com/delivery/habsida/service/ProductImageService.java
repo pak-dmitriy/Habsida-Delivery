@@ -8,6 +8,8 @@ import com.delivery.habsida.exception.ImageNotFoundException;
 import com.delivery.habsida.exception.ProductNotFoundException;
 import com.delivery.habsida.repository.ProductImageRepository;
 import com.delivery.habsida.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,12 +43,12 @@ public class ProductImageService {
 
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<ProductImageDto> getProductImages(Long storeId, Long productId) {
+    public Page<ProductImageDto> getProductImages(Long storeId, Long productId, Pageable pageable) {
 
         getProductOrThrow(storeId, productId);
 
-        return productImageRepository.findByProductIdOrderBySortOrderAsc(productId).stream()
-                .map(ProductImageDto::from).toList();
+        return productImageRepository.findByProductIdOrderBySortOrderAsc(productId, pageable)
+                .map(ProductImageDto::from);
     }
 
     @Transactional

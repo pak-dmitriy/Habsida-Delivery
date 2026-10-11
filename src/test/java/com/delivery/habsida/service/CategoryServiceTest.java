@@ -99,6 +99,8 @@ class CategoryServiceTest {
         assertEquals("categoryPhoto", dto.categoryPhoto());
         assertEquals(1L, dto.id());
         assertEquals(1L, dto.storeId());
+
+        verify(categoryRepository).findByStoreId(eq(1L), eq(pageable));
     }
 
     @Test
@@ -114,7 +116,6 @@ class CategoryServiceTest {
         verify(categoryRepository).findByStoreId(1L, pageable);
     }
 
-    // Успешное обновление
     @Test
     void updateCategory_shouldUpdateCategory() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
@@ -123,27 +124,30 @@ class CategoryServiceTest {
         CategoryResponse updatedCategory = categoryService.updateCategory(1L, 1L, defaultRequest());
 
         assertEquals("name", updatedCategory.name());
+
+        verify(categoryRepository).findById(1L);
     }
 
-    // Категория не найдена
     @Test
     void updateCategory_shouldThrowException_whenCategoryNotFound() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(CategoryNotFoundException.class,
                 () -> categoryService.updateCategory(store.getId(), category.getId(), defaultRequest()));
+
+        verify(categoryRepository).findById(1L);
     }
 
-    // Категория найдена, но принадлежит другому магазину
     @Test
     void updateCategory_shouldThrowException_whenCategoryBelongsToDifferentStore() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
 
         assertThrows(CategoryNotFoundException.class,
                 () -> categoryService.updateCategory(99L, 1L, defaultRequest()));
+
+        verify(categoryRepository).findById(1L);
     }
 
-    // Успешное удаление
     @Test
     void deleteCategory_shouldDeleteCategory() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
@@ -153,22 +157,24 @@ class CategoryServiceTest {
         verify(categoryRepository).delete(category);
     }
 
-    // Категория не найдена
     @Test
     void deleteCategory_shouldThrowException_whenCategoryNotFound() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(CategoryNotFoundException.class,
                 () -> categoryService.deleteCategory(1L, 1L));
+
+        verify(categoryRepository).findById(1L);
     }
 
-    // Категория найдена, но принадлежит другому магазину
     @Test
     void deleteCategory_shouldThrowException_whenCategoryBelongsToDifferentStore() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
 
         assertThrows(CategoryNotFoundException.class,
                 () -> categoryService.deleteCategory(99L, 1L));
+
+        verify(categoryRepository).findById(1L);
     }
 }
 

@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.ProductCreateRequest;
-import com.delivery.habsida.dto.ProductDto;
+import com.delivery.habsida.dto.ProductResponse;
 import com.delivery.habsida.entity.Category;
 import com.delivery.habsida.entity.Product;
 import com.delivery.habsida.entity.ProductStatus;
@@ -46,7 +46,7 @@ public class ProductService {
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ProductDto createProduct(Long storeId, ProductCreateRequest request) {
+    public ProductResponse createProduct(Long storeId, ProductCreateRequest request) {
         if (request.minQuantity() > request.maxQuantity()) {
             throw new InvalidQuantityException("MinQuantity cannot be greater than MaxQuantity");
         }
@@ -73,39 +73,39 @@ public class ProductService {
         product.setStore(store);
         product.setCategory(category);
 
-        return ProductDto.from(productRepository.save(product));
+        return ProductResponse.from(productRepository.save(product));
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public Page<ProductDto> getProducts(Long storeId, Long categoryId, ProductStatus status, Pageable pageable) {
+    public Page<ProductResponse> getProducts(Long storeId, Long categoryId, ProductStatus status, Pageable pageable) {
         if (categoryId != null && status != null) {
             return productRepository.findByStoreIdAndCategoryIdAndStatus(storeId, categoryId, status, pageable)
-                    .map(ProductDto::from);
+                    .map(ProductResponse::from);
 
         } else if (categoryId != null) {
             return productRepository.findByStoreIdAndCategoryId(storeId, categoryId, pageable)
-                    .map(ProductDto::from);
+                    .map(ProductResponse::from);
 
         } else if (status != null) {
             return productRepository.findByStoreIdAndStatus(storeId, status, pageable)
-                    .map(ProductDto::from);
+                    .map(ProductResponse::from);
         } else {
             return productRepository.findByStoreId(storeId, pageable)
-                    .map(ProductDto::from);
+                    .map(ProductResponse::from);
         }
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ProductDto getProduct(Long storeId, Long productId) {
+    public ProductResponse getProduct(Long storeId, Long productId) {
 
         Product product = getProductOrThrow(storeId, productId);
 
-        return ProductDto.from(product);
+        return ProductResponse.from(product);
     }
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ProductDto updateProduct(Long storeId, Long productId, ProductCreateRequest request) {
+    public ProductResponse updateProduct(Long storeId, Long productId, ProductCreateRequest request) {
         if (request.minQuantity() > request.maxQuantity()) {
             throw new InvalidQuantityException("MinQuantity cannot be greater than MaxQuantity");
         }
@@ -128,7 +128,7 @@ public class ProductService {
         product.setMinQuantity(request.minQuantity());
         product.setCategory(category);
 
-        return ProductDto.from(productRepository.save(product));
+        return ProductResponse.from(productRepository.save(product));
     }
 
     @Transactional

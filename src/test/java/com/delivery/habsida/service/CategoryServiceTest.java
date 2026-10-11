@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.CategoryCreateRequest;
-import com.delivery.habsida.dto.CategoryDTO;
+import com.delivery.habsida.dto.CategoryResponse;
 import com.delivery.habsida.entity.Category;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.exception.CategoryNotFoundException;
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,7 +70,7 @@ class CategoryServiceTest {
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
-        CategoryDTO result = categoryService.createCategory(1L, defaultRequest());
+        CategoryResponse result = categoryService.createCategory(1L, defaultRequest());
 
         assertEquals("test", result.name());
     }
@@ -90,9 +89,9 @@ class CategoryServiceTest {
     void getCategories_shouldReturnPageOfCategories() {
         when(categoryRepository.findByStoreId(1L, pageable)).thenReturn(new PageImpl<>(List.of(category)));
 
-        Page<CategoryDTO> page = categoryService.getCategories(1L, pageable, null);
+        Page<CategoryResponse> page = categoryService.getCategories(1L, pageable, null);
 
-        CategoryDTO dto = page.getContent().get(0);
+        CategoryResponse dto = page.getContent().get(0);
 
         assertEquals(1, page.getContent().size());
         assertEquals("test", dto.name());
@@ -106,7 +105,7 @@ class CategoryServiceTest {
     void getCategories_shouldReturnEmptyPage_whenNoCategoriesExist() {
         when(categoryRepository.findByStoreId(1L, pageable)).thenReturn(Page.empty());
 
-        Page<CategoryDTO> page = categoryService.getCategories(1L, pageable, null);
+        Page<CategoryResponse> page = categoryService.getCategories(1L, pageable, null);
 
         assertNotNull(page);
         assertTrue(page.isEmpty());
@@ -121,7 +120,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
-        CategoryDTO updatedCategory = categoryService.updateCategory(1L, 1L, defaultRequest());
+        CategoryResponse updatedCategory = categoryService.updateCategory(1L, 1L, defaultRequest());
 
         assertEquals("name", updatedCategory.name());
     }

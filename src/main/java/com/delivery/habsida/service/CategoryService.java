@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.CategoryCreateRequest;
-import com.delivery.habsida.dto.CategoryDTO;
+import com.delivery.habsida.dto.CategoryResponse;
 import com.delivery.habsida.entity.Category;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.exception.CategoryNotFoundException;
@@ -27,13 +27,13 @@ public class CategoryService {
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public Page<CategoryDTO> getCategories(Long storeId, Pageable pageable, Authentication authentication) {
+    public Page<CategoryResponse> getCategories(Long storeId, Pageable pageable, Authentication authentication) {
         return categoryRepository.findByStoreId(storeId, pageable)
-                .map(CategoryDTO::from);
+                .map(CategoryResponse::from);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public CategoryDTO createCategory(Long storeId, CategoryCreateRequest request) {
+    public CategoryResponse createCategory(Long storeId, CategoryCreateRequest request) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new StoreNotFoundException("Store not found"));
 
@@ -44,11 +44,11 @@ public class CategoryService {
         category.setStore(store);
 
         Category saved = categoryRepository.save(category);
-        return CategoryDTO.from(saved);
+        return CategoryResponse.from(saved);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public CategoryDTO updateCategory(Long storeId, Long categoryId, CategoryCreateRequest request) {
+    public CategoryResponse updateCategory(Long storeId, Long categoryId, CategoryCreateRequest request) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
         if (!category.getStore().getId().equals(storeId)) {
@@ -58,7 +58,7 @@ public class CategoryService {
         category.setDescription(request.description());
         category.setCategoryPhoto(request.categoryPhoto());
 
-        return CategoryDTO.from(categoryRepository.save(category));
+        return CategoryResponse.from(categoryRepository.save(category));
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")

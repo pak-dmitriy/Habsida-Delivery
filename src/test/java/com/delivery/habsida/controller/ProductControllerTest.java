@@ -1,7 +1,7 @@
 package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.ProductCreateRequest;
-import com.delivery.habsida.dto.ProductDto;
+import com.delivery.habsida.dto.ProductResponse;
 import com.delivery.habsida.entity.ProductStatus;
 import com.delivery.habsida.exception.InvalidQuantityException;
 import com.delivery.habsida.exception.ProductNotFoundException;
@@ -72,8 +72,8 @@ class ProductControllerTest {
         );
     }
 
-    private ProductDto defaultResponse() {
-        return new ProductDto(
+    private ProductResponse defaultResponse() {
+        return new ProductResponse(
                 1L,
                 "name",
                 "description",
@@ -207,7 +207,7 @@ class ProductControllerTest {
 
     @Test
     void updateProduct_shouldReturn200_whenRequestIsValid() throws Exception {
-        ProductDto updateResponse = new ProductDto(
+        ProductResponse updateResponse = new ProductResponse(
                 2L,
                 "name1",
                 "description1",

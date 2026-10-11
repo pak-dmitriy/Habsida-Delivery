@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.ProductCreateRequest;
-import com.delivery.habsida.dto.ProductDto;
+import com.delivery.habsida.dto.ProductResponse;
 import com.delivery.habsida.entity.Category;
 import com.delivery.habsida.entity.Product;
 import com.delivery.habsida.entity.ProductStatus;
@@ -101,7 +101,7 @@ class ProductServiceTest {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(productRepository.save(any(Product.class))).thenReturn(defaultProduct());
 
-        ProductDto result = productService.createProduct(1L, defaultRequest());
+        ProductResponse result = productService.createProduct(1L, defaultRequest());
 
         assertEquals("test", result.name());
         assertEquals("description", result.description());
@@ -157,8 +157,8 @@ class ProductServiceTest {
                 ProductStatus.AVAILABLE, pageable))
                 .thenReturn(new PageImpl<>(List.of(defaultProduct()), pageable, 1L));
 
-        Page<ProductDto> page = productService.getProducts(1L, 1L, ProductStatus.AVAILABLE, pageable);
-        ProductDto dto = page.getContent().get(0);
+        Page<ProductResponse> page = productService.getProducts(1L, 1L, ProductStatus.AVAILABLE, pageable);
+        ProductResponse dto = page.getContent().get(0);
 
         assertEquals(1, page.getContent().size());
         assertEquals(1L, dto.categoryId());
@@ -179,8 +179,8 @@ class ProductServiceTest {
                 1L,
                 pageable)).thenReturn(new PageImpl<>(List.of(defaultProduct()), pageable, 1L));
 
-        Page<ProductDto> page = productService.getProducts(1L, 1L, null, pageable);
-        ProductDto dto = page.getContent().get(0);
+        Page<ProductResponse> page = productService.getProducts(1L, 1L, null, pageable);
+        ProductResponse dto = page.getContent().get(0);
 
         assertEquals(1, page.getContent().size());
         assertEquals(1L, dto.categoryId());
@@ -200,10 +200,10 @@ class ProductServiceTest {
                 ProductStatus.AVAILABLE, pageable))
                 .thenReturn(new PageImpl<>(List.of(defaultProduct())));
 
-        Page<ProductDto> page = productService.getProducts(1L,
+        Page<ProductResponse> page = productService.getProducts(1L,
                 null, ProductStatus.AVAILABLE, pageable);
 
-        ProductDto dto = page.getContent().get(0);
+        ProductResponse dto = page.getContent().get(0);
 
         assertEquals(1, page.getContent().size());
         assertEquals(1L, dto.categoryId());
@@ -221,13 +221,13 @@ class ProductServiceTest {
     void getProducts_withoutFilters() {
         when(productRepository.findByStoreId(1L, pageable)).thenReturn(new PageImpl<>(List.of(defaultProduct())));
 
-        Page<ProductDto> page = productService.getProducts(
+        Page<ProductResponse> page = productService.getProducts(
                 1L,
                 null,
                 null,
                 pageable);
 
-        ProductDto dto = page.getContent().get(0);
+        ProductResponse dto = page.getContent().get(0);
 
         assertEquals(1, page.getContent().size());
         assertEquals(1L, dto.categoryId());
@@ -245,10 +245,10 @@ class ProductServiceTest {
     void getProduct_shouldReturnProduct() {
         when(productRepository.findById(1L)).thenReturn(Optional.of(defaultProduct()));
 
-        ProductDto productDto = productService.getProduct(1L, 1L);
+        ProductResponse productResponse = productService.getProduct(1L, 1L);
 
-        assertEquals(1L, productDto.id());
-        assertEquals("test", productDto.name());
+        assertEquals(1L, productResponse.id());
+        assertEquals("test", productResponse.name());
     }
 
     @Test
@@ -286,7 +286,7 @@ class ProductServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(defaultProduct()));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProductDto result = productService.updateProduct(1L, 1L, updatedProduct);
+        ProductResponse result = productService.updateProduct(1L, 1L, updatedProduct);
 
         assertEquals("test1", result.name());
         assertEquals("description1", result.description());

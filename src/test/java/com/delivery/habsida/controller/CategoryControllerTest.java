@@ -1,7 +1,7 @@
 package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.CategoryCreateRequest;
-import com.delivery.habsida.dto.CategoryDTO;
+import com.delivery.habsida.dto.CategoryResponse;
 import com.delivery.habsida.exception.CategoryNotFoundException;
 import com.delivery.habsida.exception.StoreNotFoundException;
 import com.delivery.habsida.security.JwtService;
@@ -55,8 +55,8 @@ class CategoryControllerTest {
         when(storeAccessGuard.canAccessStore(any(), anyLong())).thenReturn(true);
     }
 
-    private CategoryDTO defaultResponse() {
-        return new CategoryDTO(
+    private CategoryResponse defaultResponse() {
+        return new CategoryResponse(
                 1L,
                 "test",
                 "desc",
@@ -144,7 +144,7 @@ class CategoryControllerTest {
 
     @Test
     void updateCategory_shouldReturn200_whenRequestIsValid() throws Exception {
-        CategoryDTO updateResponse = new CategoryDTO(
+        CategoryResponse updateResponse = new CategoryResponse(
                 2L,
                 "test1",
                 "desc1",

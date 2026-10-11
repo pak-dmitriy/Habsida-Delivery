@@ -1,7 +1,7 @@
 package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.CategoryCreateRequest;
-import com.delivery.habsida.dto.CategoryDTO;
+import com.delivery.habsida.dto.CategoryResponse;
 import com.delivery.habsida.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -23,25 +23,25 @@ public class CategoryController {
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     @GetMapping("/stores/{storeId}/categories")
-    public Page<CategoryDTO> getCategories(@PathVariable Long storeId, Pageable pageable, Authentication authentication) {
+    public Page<CategoryResponse> getCategories(@PathVariable Long storeId, Pageable pageable, Authentication authentication) {
         return categoryService.getCategories(storeId, pageable, authentication);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     @PostMapping("/stores/{storeId}/categories")
-    public ResponseEntity<CategoryDTO> createCategory
+    public ResponseEntity<CategoryResponse> createCategory
             (@PathVariable Long storeId,
              @RequestBody @Valid CategoryCreateRequest categoryCreateRequest) {
-        CategoryDTO created = categoryService.createCategory(storeId, categoryCreateRequest);
+        CategoryResponse created = categoryService.createCategory(storeId, categoryCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     @PutMapping("/stores/{storeId}/categories/{categoryId}")
-    public ResponseEntity<CategoryDTO> updateCategory
+    public ResponseEntity<CategoryResponse> updateCategory
             (@PathVariable Long storeId, @PathVariable Long categoryId,
              @RequestBody @Valid CategoryCreateRequest categoryCreateRequest) {
-        CategoryDTO update = categoryService.updateCategory(storeId, categoryId, categoryCreateRequest);
+        CategoryResponse update = categoryService.updateCategory(storeId, categoryId, categoryCreateRequest);
         return ResponseEntity.ok().body(update);
     }
 

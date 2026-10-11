@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ProductImageDto;
+import com.delivery.habsida.dto.ProductImageResponse;
 import com.delivery.habsida.dto.ProductImageRequest;
 import com.delivery.habsida.entity.Product;
 import com.delivery.habsida.entity.ProductImage;
@@ -14,8 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Transactional(readOnly = true)
 @Service
 public class ProductImageService {
@@ -27,10 +25,18 @@ public class ProductImageService {
         this.productRepository = productRepository;
     }
 
+    private Product getProductOrThrow(Long storeId, Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        if (!product.getStore().getId().equals(storeId)) {
+            throw new ProductNotFoundException("Product not found");
+        }
+        return product;
+    }
+
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ProductImageDto createImages(Long storeId, Long productId, ProductImageRequest request) {
-
+    public ProductImageResponse createImages(Long storeId, Long productId, ProductImageRequest request) {
         Product product = getProductOrThrow(storeId, productId);
 
         ProductImage productImage = new ProductImage();
@@ -38,23 +44,21 @@ public class ProductImageService {
         productImage.setSortOrder(request.sortOrder());
         productImage.setProduct(product);
 
-        return ProductImageDto.from(productImageRepository.save(productImage));
+        return ProductImageResponse.from(productImageRepository.save(productImage));
     }
 
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public Page<ProductImageDto> getProductImages(Long storeId, Long productId, Pageable pageable) {
-
+    public Page<ProductImageResponse> getProductImages(Long storeId, Long productId, Pageable pageable) {
         getProductOrThrow(storeId, productId);
 
         return productImageRepository.findByProductIdOrderBySortOrderAsc(productId, pageable)
-                .map(ProductImageDto::from);
+                .map(ProductImageResponse::from);
     }
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public void deleteProductImages(Long storeId, Long productId, Long imageId) {
-
        getProductOrThrow(storeId, productId);
 
         ProductImage image = productImageRepository.findById(imageId)
@@ -64,15 +68,5 @@ public class ProductImageService {
         }
 
         productImageRepository.delete(image);
-    }
-
-    private Product getProductOrThrow(Long storeId, Long productId) {
-
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
-        if (!product.getStore().getId().equals(storeId)) {
-            throw new ProductNotFoundException("Product not found");
-        }
-        return product;
     }
 }

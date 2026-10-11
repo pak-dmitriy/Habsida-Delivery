@@ -73,7 +73,7 @@ class ProductImageServiceTest {
 
     @Test
     void createProductImages_shouldCreateProductImages() {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findById(5L)).thenReturn(Optional.of(product));
         when(productImageRepository.save(any(ProductImage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ProductImageResponse response = productImageService.createImages(1L, 5L, defaultRequest());

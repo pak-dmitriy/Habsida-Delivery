@@ -46,16 +46,8 @@ class ProductControllerTest {
     @MockitoBean
     private ProductService productService;
 
-    @MockitoBean(name = "storeAccessGuard")
-    private StoreAccessGuard storeAccessGuard;
-
     @MockitoBean
     private JwtService jwtService;
-
-    @BeforeEach
-    void setUp() {
-        when(storeAccessGuard.canAccessStore(any(), anyLong())).thenReturn(true);
-    }
 
     private ProductCreateRequest defaultRequest() {
         return new ProductCreateRequest(

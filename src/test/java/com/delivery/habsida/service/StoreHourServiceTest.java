@@ -182,7 +182,7 @@ public class StoreHourServiceTest {
         storeBreak.setEndTime(LocalTime.of(14, 0));
 
         when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeBreakRepository.findAllByStoreHourId(1L)).thenReturn(List.of(storeBreak));
 
         StoreHourRequest request = new StoreHourRequest(
                 DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), false, null);
@@ -199,7 +199,7 @@ public class StoreHourServiceTest {
         storeBreak.setEndTime(LocalTime.of(14, 0));
 
         when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeBreakRepository.findAllByStoreHourId(1L)).thenReturn(List.of(storeBreak));
 
         StoreHourRequest request = new StoreHourRequest(
                 DayOfWeek.MONDAY, null, null, true, null);
@@ -216,7 +216,7 @@ public class StoreHourServiceTest {
         storeBreak.setEndTime(LocalTime.of(14, 0));
 
         when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeBreakRepository.findAllByStoreHourId(1L)).thenReturn(List.of(storeBreak));
         when(storeHourRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         StoreHourRequest request = new StoreHourRequest(

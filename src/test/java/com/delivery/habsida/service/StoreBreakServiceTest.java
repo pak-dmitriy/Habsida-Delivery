@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.StoreBreakDto;
 import com.delivery.habsida.dto.StoreBreakRequest;
+import com.delivery.habsida.dto.StoreBreakResponse;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.StoreBreak;
 import com.delivery.habsida.entity.StoreHour;
@@ -16,18 +16,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class StoreBreakServiceTest {
@@ -40,8 +42,9 @@ public class StoreBreakServiceTest {
     @InjectMocks
     private StoreBreakService storeBreakService;
 
+    private final Pageable pageable = PageRequest.of(0, 10);
+
     private StoreHour storeHour;
-    private StoreBreak storeBreak;
 
     @BeforeEach
     void setUp() {
@@ -49,171 +52,212 @@ public class StoreBreakServiceTest {
         store.setId(1L);
 
         storeHour = new StoreHour();
-        storeHour.setId(1L);
+        storeHour.setId(2L);
         storeHour.setStore(store);
         storeHour.setDayOfWeek(DayOfWeek.MONDAY);
         storeHour.setOpenTime(LocalTime.of(9, 0));
         storeHour.setCloseTime(LocalTime.of(18, 0));
+    }
 
-        storeBreak = new StoreBreak();
-        storeBreak.setId(1L);
+    private StoreBreak defaultBreak() {
+        StoreBreak storeBreak = new StoreBreak();
+        storeBreak.setId(5L);
         storeBreak.setStoreHour(storeHour);
-        storeBreak.setStartTime(LocalTime.of(13, 0));
-        storeBreak.setEndTime(LocalTime.of(14, 0));
+        storeBreak.setStartTime(LocalTime.of(12, 0));
+        storeBreak.setEndTime(LocalTime.of(13, 0));
+
+        return storeBreak;
+    }
+
+    private StoreBreakRequest defaultRequest() {
+        return new StoreBreakRequest(
+                LocalTime.of(12, 0),
+                LocalTime.of(13, 0)
+        );
     }
 
     @Test
     void createStoreBreak_success() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
         when(storeBreakRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(15, 0), LocalTime.of(16, 0));
+        StoreBreakResponse response = storeBreakService.createStoreBreak(1L, 2L, defaultRequest());
 
-        StoreBreakDto response = storeBreakService.createStoreBreak(1L, 1L, request);
-        assertEquals(1L, response.storeHourId());
-        assertEquals(LocalTime.of(15, 0), response.startTime());
-        assertEquals(LocalTime.of(16, 0), response.endTime());
+        assertEquals(2L, response.storeHourId());
+        assertEquals(LocalTime.of(12, 0), response.startTime());
+        assertEquals(LocalTime.of(13, 0), response.endTime());
+
+        verify(storeHourRepository).findByIdAndStoreId(2L, 1L);
+        verify(storeBreakRepository).save(any());
     }
 
     @Test
     void createStoreBreak_overlapsExistingBreak_throwsException() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
         when(storeBreakRepository.existsByStoreHourIdAndStartTimeLessThanAndEndTimeGreaterThan(
-                1L, LocalTime.of(14, 30), LocalTime.of(13, 30))).thenReturn(true);
+                anyLong(), any(), any())).thenReturn(true);
 
-        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(13, 30), LocalTime.of(14, 30));
+        InvalidStoreBreakException exception = assertThrows(InvalidStoreBreakException.class,
+                () -> storeBreakService.createStoreBreak(1L, 2L, defaultRequest()));
+        assertEquals("Break overlaps with an existing break", exception.getMessage());
 
-        assertThrows(InvalidStoreBreakException.class,
-                () -> storeBreakService.createStoreBreak(1L, 1L, request));
         verify(storeBreakRepository, never()).save(any());
     }
 
     @Test
-    void createStoreBreak_hourNotFound_throwsException() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.empty());
-
-        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(15, 0), LocalTime.of(16, 0));
+    void createStoreBreak_throwsException_whenStoreHourNotFound() {
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.empty());
 
         assertThrows(StoreHourNotFoundException.class,
-                () -> storeBreakService.createStoreBreak(1L, 1L, request));
-        verify(storeBreakRepository, never()).save(any());
-    }
+                () -> storeBreakService.createStoreBreak(1L, 2L, defaultRequest()));
 
-    @Test
-    void createStoreBreak_hourOfAnotherStore_throwsException() {
-        // день 1 принадлежит магазину 1, а запрос пришёл от магазина 2
-        when(storeHourRepository.findByIdAndStoreId(1L, 2L)).thenReturn(Optional.empty());
-
-        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(15, 0), LocalTime.of(16, 0));
-
-        assertThrows(StoreHourNotFoundException.class,
-                () -> storeBreakService.createStoreBreak(2L, 1L, request));
         verify(storeBreakRepository, never()).save(any());
     }
 
     @Test
     void getStoreBreaks_success() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByStoreHourId(2L, pageable)).thenReturn(new PageImpl<>(List.of(defaultBreak())));
 
-        List<StoreBreakDto> response = storeBreakService.getStoreBreaks(1L, 1L);
-        assertEquals(1, response.size());
-        assertEquals(1L, response.get(0).id());
+        Page<StoreBreakResponse> page = storeBreakService.getStoreBreaks(1L, 2L, pageable);
+        StoreBreakResponse response = page.getContent().get(0);
+
+        assertEquals(1, page.getContent().size());
+        assertEquals(1L, response.id());
+        assertEquals(LocalTime.of(12, 0), response.startTime());
+        assertEquals(LocalTime.of(13, 0), response.endTime());
+        assertEquals(5L, response.storeHourId());
+
+        verify(storeBreakRepository).findByStoreHourId(2L, pageable);
     }
 
     @Test
     void getStoreBreaks_returnsEmptyList_whenNoBreaks() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(Collections.emptyList());
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByStoreHourId(2L, pageable)).thenReturn(new PageImpl<>(List.of()));
 
-        List<StoreBreakDto> response = storeBreakService.getStoreBreaks(1L, 1L);
-        assertTrue(response.isEmpty());
+        Page<StoreBreakResponse> page = storeBreakService.getStoreBreaks(1L, 2L, pageable);
+
+        assertTrue(page.isEmpty());
+
+        verify(storeBreakRepository).findByStoreHourId(2L, pageable);
     }
 
     @Test
-    void getStoreBreaks_hourNotFound_throwsException() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.empty());
+    void getStoreBreaks_throwsException_hourNotFound() {
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.empty());
 
         assertThrows(StoreHourNotFoundException.class,
-                () -> storeBreakService.getStoreBreaks(1L, 1L));
-        verify(storeBreakRepository, never()).findByStoreHourId(any());
+                () -> storeBreakService.getStoreBreaks(1L, 2L, pageable));
+        ;
+        verify(storeHourRepository).findByIdAndStoreId(2L, 1L);
+        verify(storeBreakRepository, never()).findByStoreHourId(any(), any());
     }
 
     @Test
     void getStoreBreak_success() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.of(storeBreak));
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(5L, 2L)).thenReturn(Optional.of(defaultBreak()));
 
-        StoreBreakDto response = storeBreakService.getStoreBreak(1L, 1L, 1L);
-        assertEquals(1L, response.id());
-        assertEquals(LocalTime.of(13, 0), response.startTime());
-        assertEquals(LocalTime.of(14, 0), response.endTime());
+        StoreBreakResponse response = storeBreakService.getStoreBreak(1L, 2L, 5L);
+
+        assertEquals(5L, response.id());
+        assertEquals(LocalTime.of(12, 0), response.startTime());
+        assertEquals(LocalTime.of(13, 0), response.endTime());
+
+        verify(storeHourRepository).findByIdAndStoreId(2L, 1L);
+        verify(storeBreakRepository).findByIdAndStoreHourId(5L, 2L);
     }
 
     @Test
-    void getStoreBreak_notFound_throwsException() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.empty());
+    void getStoreBreak_throwsException_notFound() {
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(5L, 2L)).thenReturn(Optional.empty());
 
         assertThrows(StoreBreakNotFoundException.class,
-                () -> storeBreakService.getStoreBreak(1L, 1L, 1L));
+                () -> storeBreakService.getStoreBreak(1L, 2L, 5L));
+
+        verify(storeHourRepository).findByIdAndStoreId(2L, 1L);
+        verify(storeBreakRepository).findByIdAndStoreHourId(5L, 2L);
     }
 
     @Test
     void updateStoreBreak_success() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.of(storeBreak));
+        StoreBreakRequest request = new StoreBreakRequest(
+                LocalTime.of(15, 0),
+                LocalTime.of(16, 0)
+        );
+
+        StoreBreak storeBreak = defaultBreak();
+
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(5L, 2L)).thenReturn(Optional.of(storeBreak));
         when(storeBreakRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(15, 0), LocalTime.of(16, 0));
+        StoreBreakResponse response = storeBreakService.updateStoreBreak(1L, 2L, 5L, request);
 
-        StoreBreakDto response = storeBreakService.updateStoreBreak(1L, 1L, 1L, request);
         assertEquals(LocalTime.of(15, 0), response.startTime());
         assertEquals(LocalTime.of(16, 0), response.endTime());
+
+        verify(storeHourRepository).findByIdAndStoreId(2L, 1L);
+        verify(storeBreakRepository).findByIdAndStoreHourId(5L, 2L);
+        verify(storeBreakRepository).save(storeBreak);
     }
 
     @Test
-    void updateStoreBreak_overlapsExistingBreak_throwsException() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.of(storeBreak));
+    void updateStoreBreak_throwsException_overlapsExistingBreak() {
+        StoreBreakRequest request = new StoreBreakRequest(
+                LocalTime.of(12, 0),
+                LocalTime.of(12, 30));
+
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(5L, 2L)).thenReturn(Optional.of(defaultBreak()));
         when(storeBreakRepository.existsByStoreHourIdAndIdNotAndStartTimeLessThanAndEndTimeGreaterThan(
-                1L, 1L, LocalTime.of(16, 0), LocalTime.of(15, 0))).thenReturn(true);
+                anyLong(), anyLong(), any(), any())).thenReturn(true);
 
-        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(15, 0), LocalTime.of(16, 0));
+        InvalidStoreBreakException exception = assertThrows(InvalidStoreBreakException.class,
+                () -> storeBreakService.updateStoreBreak(1L, 2L, 5L, request));
+        assertEquals("Break overlaps with an existing break", exception.getMessage());
 
-        assertThrows(InvalidStoreBreakException.class,
-                () -> storeBreakService.updateStoreBreak(1L, 1L, 1L, request));
         verify(storeBreakRepository, never()).save(any());
     }
 
     @Test
-    void updateStoreBreak_notFound_throwsException() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.empty());
+    void updateStoreBreak_throwsException_breakNotFound() {
+        StoreBreakRequest request = new StoreBreakRequest(
+                LocalTime.of(15, 0),
+                LocalTime.of(16, 0)
+        );
 
-        StoreBreakRequest request = new StoreBreakRequest(LocalTime.of(15, 0), LocalTime.of(16, 0));
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(5L, 2L)).thenReturn(Optional.empty());
 
         assertThrows(StoreBreakNotFoundException.class,
-                () -> storeBreakService.updateStoreBreak(1L, 1L, 1L, request));
+                () -> storeBreakService.updateStoreBreak(1L, 2L, 5L, request));
+
         verify(storeBreakRepository, never()).save(any());
     }
 
     @Test
     void deleteStoreBreak_success() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.of(storeBreak));
+        StoreBreak storeBreak = defaultBreak();
 
-        storeBreakService.deleteStoreBreak(1L, 1L, 1L);
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(5L, 2L)).thenReturn(Optional.of(storeBreak));
+
+        storeBreakService.deleteStoreBreak(1L, 2L, 5L);
+
         verify(storeBreakRepository).delete(storeBreak);
     }
 
     @Test
-    void deleteStoreBreak_notFound_throwsException() {
-        when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByIdAndStoreHourId(1L, 1L)).thenReturn(Optional.empty());
+    void deleteStoreBreak_throwsException_breakNotFound() {
+        when(storeHourRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findByIdAndStoreHourId(5L, 2L)).thenReturn(Optional.empty());
 
         assertThrows(StoreBreakNotFoundException.class,
-                () -> storeBreakService.deleteStoreBreak(1L, 1L, 1L));
+                () -> storeBreakService.deleteStoreBreak(1L, 2L, 5L));
+
         verify(storeBreakRepository, never()).delete(any());
     }
 }

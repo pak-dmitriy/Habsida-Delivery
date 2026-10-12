@@ -68,7 +68,7 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO createOrder(Long storeId, OrderCreateRequest orderCreateRequest) {
+    public OrderResponse createOrder(Long storeId, OrderCreateRequest orderCreateRequest) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new StoreNotFoundException("Store not found"));
         Customer customer = customerRepository.findById(orderCreateRequest.customerId())
@@ -236,19 +236,19 @@ public class OrderService {
         orderPayment.setOrder(order);
         orderPaymentRepository.save(orderPayment);
 
-        List<OrderItemDto> itemDtos = orderItems.stream()
+        List<OrderItemResponse> itemDtos = orderItems.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifiersEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
-                    List<OrderItemModifierDto> modifierDtos = modifiersEntities.stream()
-                            .map(OrderItemModifierDto::from)
+                    List<OrderItemModifierResponse> modifierDtos = modifiersEntities.stream()
+                            .map(OrderItemModifierResponse::from)
                             .toList();
-                    return OrderItemDto.from(item, modifierDtos);
+                    return OrderItemResponse.from(item, modifierDtos);
                 }).toList();
-        return OrderDTO.from(order, itemDtos);
+        return OrderResponse.from(order, itemDtos);
     }
 
     @Transactional
-    public OrderDTO acceptOrder(Long storeId, Long orderId) {
+    public OrderResponse acceptOrder(Long storeId, Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
         if (!order.getStore().getId().equals(storeId)) {
@@ -262,18 +262,18 @@ public class OrderService {
         orderRepository.save(order);
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-        List<OrderItemDto> itemDtos = items.stream()
+        List<OrderItemResponse> itemDtos = items.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
-                    List<OrderItemModifierDto> modifierDtos = modifierEntities.stream()
-                            .map(OrderItemModifierDto::from).toList();
-                    return OrderItemDto.from(item, modifierDtos);
+                    List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                            .map(OrderItemModifierResponse::from).toList();
+                    return OrderItemResponse.from(item, modifierDtos);
                 }).toList();
-        return OrderDTO.from(order, itemDtos);
+        return OrderResponse.from(order, itemDtos);
     }
 
     @Transactional
-    public OrderDTO rejectOrder(Long storeId, Long orderId, String reason) {
+    public OrderResponse rejectOrder(Long storeId, Long orderId, String reason) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
         if (!order.getStore().getId().equals(storeId)) {
@@ -288,18 +288,18 @@ public class OrderService {
         orderRepository.save(order);
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-        List<OrderItemDto> itemDtos = items.stream()
+        List<OrderItemResponse> itemDtos = items.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
-                    List<OrderItemModifierDto> modifierDtos = modifierEntities.stream()
-                            .map(OrderItemModifierDto::from).toList();
-                    return OrderItemDto.from(item, modifierDtos);
+                    List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                            .map(OrderItemModifierResponse::from).toList();
+                    return OrderItemResponse.from(item, modifierDtos);
                 }).toList();
-        return OrderDTO.from(order, itemDtos);
+        return OrderResponse.from(order, itemDtos);
     }
 
     @Transactional
-    public OrderDTO cancelOrder(Long storeId, Long orderId) {
+    public OrderResponse cancelOrder(Long storeId, Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
         if (!order.getStore().getId().equals(storeId)) {
@@ -313,18 +313,18 @@ public class OrderService {
         orderRepository.save(order);
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-        List<OrderItemDto> itemDtos = items.stream()
+        List<OrderItemResponse> itemDtos = items.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
-                    List<OrderItemModifierDto> modifierDtos = modifierEntities.stream()
-                            .map(OrderItemModifierDto::from).toList();
-                    return OrderItemDto.from(item, modifierDtos);
+                    List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                            .map(OrderItemModifierResponse::from).toList();
+                    return OrderItemResponse.from(item, modifierDtos);
                 }).toList();
-        return OrderDTO.from(order, itemDtos);
+        return OrderResponse.from(order, itemDtos);
     }
 
     @Transactional
-    public OrderDTO startOrder(Long storeId, Long orderId) {
+    public OrderResponse startOrder(Long storeId, Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
         if (!order.getStore().getId().equals(storeId)) {
@@ -337,18 +337,18 @@ public class OrderService {
         orderRepository.save(order);
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-        List<OrderItemDto> itemDtos = items.stream()
+        List<OrderItemResponse> itemDtos = items.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
-                    List<OrderItemModifierDto> modifierDtos = modifierEntities.stream()
-                            .map(OrderItemModifierDto::from).toList();
-                    return OrderItemDto.from(item, modifierDtos);
+                    List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                            .map(OrderItemModifierResponse::from).toList();
+                    return OrderItemResponse.from(item, modifierDtos);
                 }).toList();
-        return OrderDTO.from(order, itemDtos);
+        return OrderResponse.from(order, itemDtos);
     }
 
     @Transactional
-    public OrderDTO completeOrder(Long storeId, Long orderId) {
+    public OrderResponse completeOrder(Long storeId, Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
         if (!order.getStore().getId().equals(storeId)) {
@@ -361,18 +361,18 @@ public class OrderService {
         orderRepository.save(order);
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-        List<OrderItemDto> itemDtos = items.stream()
+        List<OrderItemResponse> itemDtos = items.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
-                    List<OrderItemModifierDto> modifierDtos = modifierEntities.stream()
-                            .map(OrderItemModifierDto::from).toList();
-                    return OrderItemDto.from(item, modifierDtos);
+                    List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                            .map(OrderItemModifierResponse::from).toList();
+                    return OrderItemResponse.from(item, modifierDtos);
                 }).toList();
-        return OrderDTO.from(order, itemDtos);
+        return OrderResponse.from(order, itemDtos);
     }
 
     @Transactional
-    public List<OrderDTO> getNewOrders(Long storeId) {
+    public List<OrderResponse> getNewOrders(Long storeId) {
         List<Order> orders = orderRepository.findByStoreIdAndOrderStatus(storeId, CREATED);
         List<Long> orderIds = orders.stream()
                 .map(Order::getId)
@@ -389,15 +389,15 @@ public class OrderService {
         return orders.stream()
                 .map(order -> {
                     List<OrderItem> items = itemsByOrderId.getOrDefault(order.getId(), List.of());
-                    List<OrderItemDto> itemDtos = items.stream()
+                    List<OrderItemResponse> itemDtos = items.stream()
                             .map(item -> {
                                 List<OrderItemModifier> modifierEntities = modifiersByItemId.getOrDefault(item.getId(), List.of());
-                                List<OrderItemModifierDto> modifierDtos = modifierEntities.stream()
-                                        .map(OrderItemModifierDto::from)
+                                List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                                        .map(OrderItemModifierResponse::from)
                                         .toList();
-                                return OrderItemDto.from(item, modifierDtos);
+                                return OrderItemResponse.from(item, modifierDtos);
                             }).toList();
-                    return OrderDTO.from(order, itemDtos);
+                    return OrderResponse.from(order, itemDtos);
                 })
                 .toList();
     }

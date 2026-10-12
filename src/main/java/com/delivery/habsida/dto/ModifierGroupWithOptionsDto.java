@@ -10,7 +10,7 @@ public record ModifierGroupWithOptionsDto(
         boolean required,
         Integer minSelect,
         Integer maxSelect,
-        List<ModifierOptionDto> options
+        List<ModifierOptionResponse> options
 ) {
     public static ModifierGroupWithOptionsDto from(ModifierGroup modifierGroup) {
         return new ModifierGroupWithOptionsDto(
@@ -19,7 +19,7 @@ public record ModifierGroupWithOptionsDto(
                 modifierGroup.isRequired(),
                 modifierGroup.getMinSelect(),
                 modifierGroup.getMaxSelect(),
-                modifierGroup.getModifierOptions().stream().map(ModifierOptionDto::from).toList()
+                modifierGroup.getModifierOptions().stream().map(ModifierOptionResponse::from).toList()
         );
     }
 }

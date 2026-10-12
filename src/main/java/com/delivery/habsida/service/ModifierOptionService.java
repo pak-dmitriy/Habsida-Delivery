@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierOptionDto;
+import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.dto.ModifierOptionRequest;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.ModifierOption;
@@ -50,9 +50,9 @@ public class ModifierOptionService {
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ModifierOptionDto createModifierOption(Long storeId,
-                                                  Long groupId,
-                                                  ModifierOptionRequest request) {
+    public ModifierOptionResponse createModifierOption(Long storeId,
+                                                       Long groupId,
+                                                       ModifierOptionRequest request) {
         validatePriceAndIsFree(request.priceDelta(), request.isFree());
 
         ModifierOption modifierOption = new ModifierOption();
@@ -63,30 +63,30 @@ public class ModifierOptionService {
         modifierOption.setIsFree(request.isFree());
         modifierOption.setModifierGroup(modifierGroup);
 
-        return ModifierOptionDto.from(modifierOptionRepository.save(modifierOption));
+        return ModifierOptionResponse.from(modifierOptionRepository.save(modifierOption));
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ModifierOptionDto getModifierOption(Long storeId, Long groupId, Long optionId) {
+    public ModifierOptionResponse getModifierOption(Long storeId, Long groupId, Long optionId) {
         ModifierOption modifierOption = getModifierOptionOrThrow(storeId, groupId, optionId);
-        return ModifierOptionDto.from(modifierOption);
+        return ModifierOptionResponse.from(modifierOption);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<ModifierOptionDto> getModifierOptions(Long storeId, Long groupId) {
+    public List<ModifierOptionResponse> getModifierOptions(Long storeId, Long groupId) {
         getModifierGroupOrThrow(storeId, groupId);
 
         return modifierOptionRepository.findByModifierGroupIdOrderByIdAsc(groupId)
                 .stream()
-                .map(ModifierOptionDto::from).toList();
+                .map(ModifierOptionResponse::from).toList();
     }
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ModifierOptionDto updateModifierOption(Long storeId,
-                                                  Long groupId,
-                                                  Long optionId,
-                                                  ModifierOptionRequest request) {
+    public ModifierOptionResponse updateModifierOption(Long storeId,
+                                                       Long groupId,
+                                                       Long optionId,
+                                                       ModifierOptionRequest request) {
         validatePriceAndIsFree(request.priceDelta(), request.isFree());
 
         ModifierOption modifierOption = getModifierOptionOrThrow(storeId, groupId, optionId);
@@ -94,7 +94,7 @@ public class ModifierOptionService {
         modifierOption.setPriceDelta(request.priceDelta());
         modifierOption.setIsFree(request.isFree());
 
-        return ModifierOptionDto.from(modifierOptionRepository.save(modifierOption));
+        return ModifierOptionResponse.from(modifierOptionRepository.save(modifierOption));
     }
 
     @Transactional

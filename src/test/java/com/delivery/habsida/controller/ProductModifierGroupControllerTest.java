@@ -1,8 +1,8 @@
 package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
-import com.delivery.habsida.dto.ModifierOptionDto;
-import com.delivery.habsida.dto.ProductModifierGroupDto;
+import com.delivery.habsida.dto.ModifierOptionResponse;
+import com.delivery.habsida.dto.ProductModifierGroupResponse;
 import com.delivery.habsida.exception.ProductModifierGroupAlreadyExistsException;
 import com.delivery.habsida.exception.ProductModifierGroupNotFoundException;
 import com.delivery.habsida.exception.ProductNotFoundException;
@@ -60,7 +60,7 @@ public class ProductModifierGroupControllerTest {
     @WithMockUser
     @Test
     void createProductModifierGroup_success() throws Exception {
-        ProductModifierGroupDto dto = new ProductModifierGroupDto(
+        ProductModifierGroupResponse dto = new ProductModifierGroupResponse(
                 1L,
                 1L,
                 1L
@@ -90,7 +90,7 @@ public class ProductModifierGroupControllerTest {
                 1,
                 2,
                 List.of(
-                        new ModifierOptionDto(
+                        new ModifierOptionResponse(
                                 1L,
                                 1L,
                                 "name",

@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.OrderCreateRequest;
-import com.delivery.habsida.dto.OrderDTO;
+import com.delivery.habsida.dto.OrderResponse;
 import com.delivery.habsida.dto.OrderItemRequest;
 import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.*;
@@ -197,7 +197,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("50.40"), result.total());
         assertEquals(1, result.orderItems().size());
@@ -306,7 +306,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("40.40"), result.total());
         assertEquals(1, result.orderItems().size());
@@ -337,7 +337,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
 
-        OrderDTO result = orderService.createOrder(1L, updateDeliveryType);
+        OrderResponse result = orderService.createOrder(1L, updateDeliveryType);
 
         assertEquals(new BigDecimal("40.40"), result.total());
         assertEquals(1, result.orderItems().size());
@@ -382,7 +382,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(1, result.orderItems().get(0).orderItemModifiers().size());
         assertEquals("Double size", result.orderItems().get(0).orderItemModifiers().get(0).optionName());
@@ -463,7 +463,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, defaultRequest());
+        OrderResponse result = orderService.createOrder(1L, defaultRequest());
 
         assertEquals("6", result.orderNumber());
     }
@@ -546,7 +546,7 @@ class OrderServiceTest {
     void acceptOrder_shouldSucceed_whenTransitionIsValid() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
-        OrderDTO result = orderService.acceptOrder(1L, order.getId());
+        OrderResponse result = orderService.acceptOrder(1L, order.getId());
         assertEquals(OrderStatus.ACCEPTED, result.orderStatus());
     }
 
@@ -588,7 +588,7 @@ class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.rejectOrder(1L, order.getId(), "Out of stock");
+        OrderResponse result = orderService.rejectOrder(1L, order.getId(), "Out of stock");
 
         assertEquals(OrderStatus.REJECTED, result.orderStatus());
     }
@@ -611,7 +611,7 @@ class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.cancelOrder(1L, order.getId());
+        OrderResponse result = orderService.cancelOrder(1L, order.getId());
 
         assertEquals(OrderStatus.CANCELLED, result.orderStatus());
     }
@@ -635,7 +635,7 @@ class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.startOrder(1L, order.getId());
+        OrderResponse result = orderService.startOrder(1L, order.getId());
 
         assertEquals(OrderStatus.IN_PROGRESS, result.orderStatus());
     }
@@ -657,7 +657,7 @@ class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.completeOrder(1L, order.getId());
+        OrderResponse result = orderService.completeOrder(1L, order.getId());
 
         assertEquals(OrderStatus.COMPLETED, result.orderStatus());
     }
@@ -680,7 +680,7 @@ class OrderServiceTest {
         when(orderItemRepository.findByOrderIdIn(List.of(order.getId())))
                 .thenReturn(List.of());
 
-        List<OrderDTO> result = orderService.getNewOrders(1L);
+        List<OrderResponse> result = orderService.getNewOrders(1L);
 
         assertEquals(1, result.size());
         assertEquals(OrderStatus.CREATED, result.get(0).orderStatus());
@@ -695,7 +695,7 @@ class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.cancelOrder(1L, order.getId());
+        OrderResponse result = orderService.cancelOrder(1L, order.getId());
 
         assertEquals(OrderStatus.CANCELLED, result.orderStatus());
     }
@@ -731,7 +731,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("4.00"), result.discountTotal());
         assertEquals(new BigDecimal("46.40"), result.total());
@@ -754,7 +754,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("0.00"), result.discountTotal());
         assertEquals(new BigDecimal("50.40"), result.total());
@@ -777,7 +777,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
-        OrderDTO result = orderService.createOrder(1L, defaultRequest());
+        OrderResponse result = orderService.createOrder(1L, defaultRequest());
 
         assertEquals(new BigDecimal("6.60"), result.discountTotal());
     }
@@ -811,7 +811,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO oneLineResult = orderService.createOrder(1L, oneLinesRequest);
+        OrderResponse oneLineResult = orderService.createOrder(1L, oneLinesRequest);
 
         when(productRepository.decreaseStockAndGet(1L, 1)).thenReturn(List.of(99));
 
@@ -826,7 +826,7 @@ class OrderServiceTest {
                         new OrderItemRequest(1L, 1, List.of())
                 )
         );
-        OrderDTO twoLinesResult = orderService.createOrder(1L, twoLinesRequest);
+        OrderResponse twoLinesResult = orderService.createOrder(1L, twoLinesRequest);
 
         assertEquals(new BigDecimal("0.02"), oneLineResult.discountTotal());
         assertEquals(oneLineResult.discountTotal(), twoLinesResult.discountTotal());

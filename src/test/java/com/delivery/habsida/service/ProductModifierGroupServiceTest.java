@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
-import com.delivery.habsida.dto.ProductModifierGroupDto;
+import com.delivery.habsida.dto.ProductModifierGroupResponse;
 import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.ModifierGroupNotFoundException;
 import com.delivery.habsida.exception.ProductModifierGroupAlreadyExistsException;
@@ -78,7 +78,7 @@ public class ProductModifierGroupServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(false);
         when(productModifierGroupRepository.save(any())).thenReturn(productModifierGroup);
 
-        ProductModifierGroupDto dto = productModifierGroupService.createProductModifierGroup(1L, 1L, 1L);
+        ProductModifierGroupResponse dto = productModifierGroupService.createProductModifierGroup(1L, 1L, 1L);
         assertEquals(1L, dto.id());
     }
 

@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierGroupDto;
+import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.dto.ModifierGroupRequest;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.Store;
@@ -40,7 +40,7 @@ public class ModifierGroupService {
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ModifierGroupDto createModifierGroup(Long storeId, ModifierGroupRequest request) {
+    public ModifierGroupResponse createModifierGroup(Long storeId, ModifierGroupRequest request) {
 
         validateSelectRange(request);
 
@@ -53,27 +53,27 @@ public class ModifierGroupService {
         modifierGroup.setRequired(request.required());
         modifierGroup.setMinSelect(request.minSelect());
         modifierGroup.setMaxSelect(request.maxSelect());
-        return ModifierGroupDto.from(modifierGroupRepository.save(modifierGroup));
+        return ModifierGroupResponse.from(modifierGroupRepository.save(modifierGroup));
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ModifierGroupDto getModifierGroup(Long storeId, Long groupId) {
+    public ModifierGroupResponse getModifierGroup(Long storeId, Long groupId) {
         ModifierGroup modifierGroup = getModifierGroupOrThrow(storeId, groupId);
 
-        return ModifierGroupDto.from(modifierGroup);
+        return ModifierGroupResponse.from(modifierGroup);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<ModifierGroupDto> getModifierGroups(Long storeId) {
+    public List<ModifierGroupResponse> getModifierGroups(Long storeId) {
 
         return modifierGroupRepository.findByStoreId(storeId)
                 .stream()
-                .map(ModifierGroupDto::from).toList();
+                .map(ModifierGroupResponse::from).toList();
     }
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ModifierGroupDto updateModifierGroup(Long storeId, Long groupId, ModifierGroupRequest request) {
+    public ModifierGroupResponse updateModifierGroup(Long storeId, Long groupId, ModifierGroupRequest request) {
 
         validateSelectRange(request);
 
@@ -83,7 +83,7 @@ public class ModifierGroupService {
         modifierGroup.setMinSelect(request.minSelect());
         modifierGroup.setMaxSelect(request.maxSelect());
 
-        return ModifierGroupDto.from(modifierGroupRepository.save(modifierGroup));
+        return ModifierGroupResponse.from(modifierGroupRepository.save(modifierGroup));
     }
 
     @Transactional

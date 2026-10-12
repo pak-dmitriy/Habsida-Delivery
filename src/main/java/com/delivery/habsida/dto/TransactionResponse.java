@@ -5,13 +5,13 @@ import com.delivery.habsida.entity.TransactionStatus;
 
 import java.math.BigDecimal;
 
-public record TransactionDto(
+public record TransactionResponse(
         Long id,
         TransactionStatus status,
         BigDecimal amount
 ) {
-    public static TransactionDto from(Transaction transaction) {
-      return new TransactionDto(
+    public static TransactionResponse from(Transaction transaction) {
+      return new TransactionResponse(
               transaction.getId(),
         transaction.getStatus(),
         transaction.getAmount()

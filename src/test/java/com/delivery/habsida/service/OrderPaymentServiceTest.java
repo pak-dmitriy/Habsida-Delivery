@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.OrderPaymentDto;
+import com.delivery.habsida.dto.OrderPaymentResponse;
 import com.delivery.habsida.dto.OrderPaymentRequest;
 import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.OrderNotFoundException;
@@ -61,7 +61,7 @@ public class OrderPaymentServiceTest {
         when(orderRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(order));
         when(orderPaymentRepository.findByOrderId(1L)).thenReturn(Optional.of(orderPayment));
 
-        OrderPaymentDto response = orderPaymentService.getOrderPayment(1L, 1L);
+        OrderPaymentResponse response = orderPaymentService.getOrderPayment(1L, 1L);
         assertEquals(PaymentStatus.UNPAID, response.status());
         assertEquals(PaymentMethod.CASH, response.method());
     }
@@ -94,7 +94,7 @@ public class OrderPaymentServiceTest {
                 PaymentStatus.PAID,
                 PaymentMethod.CASH
         );
-        OrderPaymentDto response = orderPaymentService.updateOrderPayment(1L, 1L, request);
+        OrderPaymentResponse response = orderPaymentService.updateOrderPayment(1L, 1L, request);
         assertEquals(1L, response.transaction().id());
         assertEquals(PaymentStatus.PAID, response.status());
         assertNotNull(response.paidAt());
@@ -124,7 +124,7 @@ public class OrderPaymentServiceTest {
                 PaymentStatus.UNPAID,
                 PaymentMethod.CASH
         );
-        OrderPaymentDto response = orderPaymentService.updateOrderPayment(1L, 1L, request);
+        OrderPaymentResponse response = orderPaymentService.updateOrderPayment(1L, 1L, request);
         assertEquals(PaymentStatus.UNPAID, response.status());
         assertNull(response.paidAt());
         verify(transactionRepository, never()).findById(any());

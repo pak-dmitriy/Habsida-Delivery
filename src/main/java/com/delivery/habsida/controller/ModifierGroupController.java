@@ -1,6 +1,6 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ModifierGroupDto;
+import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.dto.ModifierGroupRequest;
 import com.delivery.habsida.service.ModifierGroupService;
 import jakarta.validation.Valid;
@@ -21,29 +21,29 @@ public class ModifierGroupController {
     }
 
     @PostMapping
-    public ResponseEntity<ModifierGroupDto> createModifierGroup(@PathVariable Long storeId,
-                                                                @RequestBody @Valid ModifierGroupRequest request) {
-        ModifierGroupDto created = modifierGroupService.createModifierGroup(storeId, request);
+    public ResponseEntity<ModifierGroupResponse> createModifierGroup(@PathVariable Long storeId,
+                                                                     @RequestBody @Valid ModifierGroupRequest request) {
+        ModifierGroupResponse created = modifierGroupService.createModifierGroup(storeId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
-    public List<ModifierGroupDto> getModifierGroups(@PathVariable Long storeId) {
+    public List<ModifierGroupResponse> getModifierGroups(@PathVariable Long storeId) {
         return modifierGroupService.getModifierGroups(storeId);
     }
 
     @GetMapping("/{groupId}")
-    public ModifierGroupDto getModifierGroup(@PathVariable Long storeId,
-                                             @PathVariable Long groupId) {
+    public ModifierGroupResponse getModifierGroup(@PathVariable Long storeId,
+                                                  @PathVariable Long groupId) {
         return modifierGroupService.getModifierGroup(storeId, groupId);
     }
 
     @PutMapping("/{groupId}")
-    public ResponseEntity<ModifierGroupDto> updateModifierGroup(@PathVariable Long storeId,
-                                                                @PathVariable Long groupId,
-                                                                @RequestBody @Valid ModifierGroupRequest request) {
-        ModifierGroupDto updated = modifierGroupService.updateModifierGroup(storeId, groupId, request);
+    public ResponseEntity<ModifierGroupResponse> updateModifierGroup(@PathVariable Long storeId,
+                                                                     @PathVariable Long groupId,
+                                                                     @RequestBody @Valid ModifierGroupRequest request) {
+        ModifierGroupResponse updated = modifierGroupService.updateModifierGroup(storeId, groupId, request);
         return ResponseEntity.ok(updated);
     }
 

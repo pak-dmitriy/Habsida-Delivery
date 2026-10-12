@@ -6,17 +6,17 @@ import com.delivery.habsida.entity.PaymentStatus;
 
 import java.time.LocalDateTime;
 
-public record OrderPaymentDto(
+public record OrderPaymentResponse(
         Long id,
         Long orderId,
         PaymentStatus status,
         PaymentMethod method,
         LocalDateTime paidAt,
         String provider,
-        TransactionDto transaction
+        TransactionResponse transaction
         ) {
-    public static OrderPaymentDto from(OrderPayment orderPayment) {
-        return new OrderPaymentDto(
+    public static OrderPaymentResponse from(OrderPayment orderPayment) {
+        return new OrderPaymentResponse(
                 orderPayment.getId(),
                 orderPayment.getOrder().getId(),
                 orderPayment.getStatus(),
@@ -24,7 +24,7 @@ public record OrderPaymentDto(
                 orderPayment.getPaidAt(),
                 orderPayment.getProvider(),
                 orderPayment.getTransaction() != null
-                ? TransactionDto.from(orderPayment.getTransaction()) : null
+                ? TransactionResponse.from(orderPayment.getTransaction()) : null
         );
     }
 }

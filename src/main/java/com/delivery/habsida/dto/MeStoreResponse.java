@@ -2,12 +2,12 @@ package com.delivery.habsida.dto;
 
 import com.delivery.habsida.entity.Store;
 
-public record MeStoreDto (
+public record MeStoreResponse(
         Long id,
         String name
 ){
-   public static MeStoreDto from(Store store) {
-       return new MeStoreDto(
+   public static MeStoreResponse from(Store store) {
+       return new MeStoreResponse(
                store.getId(),
                store.getName()
        );

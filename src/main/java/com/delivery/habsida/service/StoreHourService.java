@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.StoreHourDto;
+import com.delivery.habsida.dto.StoreHourResponse;
 import com.delivery.habsida.dto.StoreHourRequest;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.StoreBreak;
@@ -53,7 +53,7 @@ public class StoreHourService {
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public StoreHourDto createStoreHour(Long storeId, StoreHourRequest request) {
+    public StoreHourResponse createStoreHour(Long storeId, StoreHourRequest request) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new StoreNotFoundException("Store not found"));
 
@@ -62,29 +62,29 @@ public class StoreHourService {
 
         applyRequest(storeHour, request);
 
-        return StoreHourDto.from(storeHourRepository.save(storeHour));
+        return StoreHourResponse.from(storeHourRepository.save(storeHour));
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<StoreHourDto> getStoreHours(Long storeId) {
+    public List<StoreHourResponse> getStoreHours(Long storeId) {
         return storeHourRepository.findByStoreId(storeId)
                 .stream()
-                .map(StoreHourDto::from).toList();
+                .map(StoreHourResponse::from).toList();
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public StoreHourDto getStoreHour(Long storeId, Long hourId) {
+    public StoreHourResponse getStoreHour(Long storeId, Long hourId) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
-        return StoreHourDto.from(storeHour);
+        return StoreHourResponse.from(storeHour);
     }
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public StoreHourDto updateStoreHour(Long storeId, Long hourId, StoreHourRequest request) {
+    public StoreHourResponse updateStoreHour(Long storeId, Long hourId, StoreHourRequest request) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
         validateBreaksFitNewHours(hourId, request);
         applyRequest(storeHour, request);
-        return StoreHourDto.from(storeHourRepository.save(storeHour));
+        return StoreHourResponse.from(storeHourRepository.save(storeHour));
     }
 
     private void validateBreaksFitNewHours(Long hourId, StoreHourRequest request) {

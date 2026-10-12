@@ -1,6 +1,6 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ModifierOptionDto;
+import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.dto.ModifierOptionRequest;
 import com.delivery.habsida.exception.InvalidModifierOptionException;
 import com.delivery.habsida.exception.ModifierGroupNotFoundException;
@@ -64,7 +64,7 @@ public class ModifierOptionControllerTest {
                 false
         );
 
-        ModifierOptionDto response = new ModifierOptionDto(
+        ModifierOptionResponse response = new ModifierOptionResponse(
                 1L,
                 1L,
                 "option",
@@ -97,7 +97,7 @@ public class ModifierOptionControllerTest {
     @WithMockUser
     @Test
     void getModifierOption_shouldReturn200() throws Exception {
-        ModifierOptionDto response = new ModifierOptionDto(
+        ModifierOptionResponse response = new ModifierOptionResponse(
                 1L,
                 1L,
                 "option",
@@ -120,7 +120,7 @@ public class ModifierOptionControllerTest {
     @WithMockUser
     @Test
     void getModifierOptions_shouldReturn200() throws Exception {
-        ModifierOptionDto response = new ModifierOptionDto(
+        ModifierOptionResponse response = new ModifierOptionResponse(
                 1L,
                 1L,
                 "option",
@@ -150,7 +150,7 @@ public class ModifierOptionControllerTest {
                 false
         );
 
-        ModifierOptionDto response = new ModifierOptionDto(
+        ModifierOptionResponse response = new ModifierOptionResponse(
                 1L,
                 1L,
                 "option",

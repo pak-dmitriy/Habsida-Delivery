@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierOptionDto;
+import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.dto.ModifierOptionRequest;
 import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.InvalidModifierOptionException;
@@ -72,7 +72,7 @@ public class ModifierOptionServiceTest {
                 true
         );
 
-        ModifierOptionDto result = modifierOptionService.createModifierOption(1L, 1L, request);
+        ModifierOptionResponse result = modifierOptionService.createModifierOption(1L, 1L, request);
         assertEquals("option", result.name());
         assertEquals(new BigDecimal(0), result.priceDelta());
         assertTrue(result.isFree());
@@ -94,9 +94,9 @@ public class ModifierOptionServiceTest {
         when(modifierOptionRepository.findByIdAndModifierGroupId(1L, 1L)).thenReturn(Optional.of(modifierOption));
         when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
 
-        ModifierOptionDto modifierOptionDto = modifierOptionService.getModifierOption(1L, 1L, 1L);
-        assertEquals(1L, modifierOptionDto.id());
-        assertEquals("option", modifierOptionDto.name());
+        ModifierOptionResponse modifierOptionResponse = modifierOptionService.getModifierOption(1L, 1L, 1L);
+        assertEquals(1L, modifierOptionResponse.id());
+        assertEquals("option", modifierOptionResponse.name());
     }
 
     @Test
@@ -113,7 +113,7 @@ public class ModifierOptionServiceTest {
         when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
         when(modifierOptionRepository.findByModifierGroupIdOrderByIdAsc(1L)).thenReturn(List.of(modifierOption));
 
-        List<ModifierOptionDto> list = modifierOptionService.getModifierOptions(1L, 1L);
+        List<ModifierOptionResponse> list = modifierOptionService.getModifierOptions(1L, 1L);
         assertEquals(1, list.size());
         assertEquals(1L, list.get(0).id());
     }
@@ -137,7 +137,7 @@ public class ModifierOptionServiceTest {
                 new BigDecimal(0),
                 true
         );
-        ModifierOptionDto result = modifierOptionService.updateModifierOption(1L, 1L, 1L, request);
+        ModifierOptionResponse result = modifierOptionService.updateModifierOption(1L, 1L, 1L, request);
         assertEquals("option", result.name());
         assertEquals(new BigDecimal(0), result.priceDelta());
         assertTrue(result.isFree());

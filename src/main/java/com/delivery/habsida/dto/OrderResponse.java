@@ -7,7 +7,7 @@ import com.delivery.habsida.entity.OrderType;
 import java.math.BigDecimal;
 import java.util.List;
 
-public record OrderDTO(
+public record OrderResponse(
         Long id,
         Long storeId,
         Long customerId,
@@ -20,7 +20,7 @@ public record OrderDTO(
         BigDecimal deliveryFee,
         BigDecimal discountTotal,
         BigDecimal total,
-        List<OrderItemDto> orderItems,
+        List<OrderItemResponse> orderItems,
         String orderNumber,
         String currency,
         String deliveryCity,
@@ -29,8 +29,8 @@ public record OrderDTO(
         String deliveryApartment
 ) {
 
-    public static OrderDTO from(Order order, List<OrderItemDto> items) {
-        return new OrderDTO(
+    public static OrderResponse from(Order order, List<OrderItemResponse> items) {
+        return new OrderResponse(
                 order.getId(),
                 order.getStore().getId(),
                 order.getCustomer().getId(),

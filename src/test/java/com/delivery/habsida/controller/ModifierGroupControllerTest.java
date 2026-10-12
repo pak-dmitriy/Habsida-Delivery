@@ -1,6 +1,6 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ModifierGroupDto;
+import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.dto.ModifierGroupRequest;
 import com.delivery.habsida.exception.InvalidQuantityException;
 import com.delivery.habsida.exception.ModifierGroupNotFoundException;
@@ -62,7 +62,7 @@ public class ModifierGroupControllerTest {
                 1,
                 5
         );
-        ModifierGroupDto response = new ModifierGroupDto(
+        ModifierGroupResponse response = new ModifierGroupResponse(
                 1L,
                 1L,
                 "group",
@@ -99,7 +99,7 @@ public class ModifierGroupControllerTest {
     @WithMockUser
     @Test
     void getModifierGroups_success() throws Exception {
-        ModifierGroupDto response = new ModifierGroupDto(
+        ModifierGroupResponse response = new ModifierGroupResponse(
                 1L,
                 1L,
                 "group",
@@ -134,7 +134,7 @@ public class ModifierGroupControllerTest {
     @WithMockUser
     @Test
     void getModifierGroup_success() throws Exception {
-        ModifierGroupDto response = new ModifierGroupDto(
+        ModifierGroupResponse response = new ModifierGroupResponse(
                 1L,
                 1L,
                 "group",
@@ -174,7 +174,7 @@ public class ModifierGroupControllerTest {
                 1,
                 5
         );
-        ModifierGroupDto response = new ModifierGroupDto(
+        ModifierGroupResponse response = new ModifierGroupResponse(
                 1L,
                 1L,
                 "group",

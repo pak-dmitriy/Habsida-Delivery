@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
-import com.delivery.habsida.dto.ProductModifierGroupDto;
+import com.delivery.habsida.dto.ProductModifierGroupResponse;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.Product;
 import com.delivery.habsida.entity.ProductModifierGroup;
@@ -52,7 +52,7 @@ public class ProductModifierGroupService {
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ProductModifierGroupDto createProductModifierGroup(Long storeId, Long productId, Long groupId) {
+    public ProductModifierGroupResponse createProductModifierGroup(Long storeId, Long productId, Long groupId) {
         Product product = getProductOrThrow(storeId, productId);
         ModifierGroup modifierGroup = getModifierGroupOrThrow(storeId, groupId);
         checkNotDuplicate(productId, groupId);
@@ -61,7 +61,7 @@ public class ProductModifierGroupService {
         created.setProduct(product);
         created.setModifierGroup(modifierGroup);
 
-        return ProductModifierGroupDto.from(productModifierGroupRepository.save(created));
+        return ProductModifierGroupResponse.from(productModifierGroupRepository.save(created));
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication,#storeId)")

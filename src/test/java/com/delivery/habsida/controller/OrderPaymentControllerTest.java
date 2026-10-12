@@ -1,6 +1,6 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.OrderPaymentDto;
+import com.delivery.habsida.dto.OrderPaymentResponse;
 import com.delivery.habsida.dto.OrderPaymentRequest;
 import com.delivery.habsida.entity.PaymentMethod;
 import com.delivery.habsida.entity.PaymentStatus;
@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -59,7 +58,7 @@ public class OrderPaymentControllerTest {
     @WithMockUser
     @Test
     void getOrderPayment_success() throws Exception {
-        OrderPaymentDto response = new OrderPaymentDto(
+        OrderPaymentResponse response = new OrderPaymentResponse(
                 1L,
                 1L,
                 PaymentStatus.PAID,
@@ -103,7 +102,7 @@ public class OrderPaymentControllerTest {
                 PaymentStatus.PAID,
                 PaymentMethod.CASH
         );
-        OrderPaymentDto response = new OrderPaymentDto(
+        OrderPaymentResponse response = new OrderPaymentResponse(
                 1L,
                 1L,
                 PaymentStatus.PAID,

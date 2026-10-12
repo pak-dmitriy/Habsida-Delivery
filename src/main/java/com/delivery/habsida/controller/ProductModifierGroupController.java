@@ -1,7 +1,7 @@
 package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
-import com.delivery.habsida.dto.ProductModifierGroupDto;
+import com.delivery.habsida.dto.ProductModifierGroupResponse;
 import com.delivery.habsida.service.ProductModifierGroupService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +19,9 @@ public class ProductModifierGroupController {
     }
 
     @PostMapping("/{groupId}")
-    public ResponseEntity<ProductModifierGroupDto> createProductModifierGroup(@PathVariable Long storeId,
-                                                                              @PathVariable Long productId,
-                                                                              @PathVariable Long groupId) {
+    public ResponseEntity<ProductModifierGroupResponse> createProductModifierGroup(@PathVariable Long storeId,
+                                                                                   @PathVariable Long productId,
+                                                                                   @PathVariable Long groupId) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(productModifierGroupService.createProductModifierGroup(storeId, productId, groupId));
     }

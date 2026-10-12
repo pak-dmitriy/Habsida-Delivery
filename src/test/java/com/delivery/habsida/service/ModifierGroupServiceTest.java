@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierGroupDto;
+import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.dto.ModifierGroupRequest;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.Store;
@@ -65,7 +65,7 @@ public class ModifierGroupServiceTest {
                 5
         );
 
-        ModifierGroupDto response = modifierGroupService.createModifierGroup(1L, request);
+        ModifierGroupResponse response = modifierGroupService.createModifierGroup(1L, request);
         assertEquals("group", response.name());
         assertTrue(response.required());
         assertEquals(1, response.minSelect());
@@ -88,7 +88,7 @@ public class ModifierGroupServiceTest {
     void getModifierGroup_success() {
         when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
 
-        ModifierGroupDto response = modifierGroupService.getModifierGroup(1L, 1L);
+        ModifierGroupResponse response = modifierGroupService.getModifierGroup(1L, 1L);
         assertTrue(response.required());
         assertEquals(1, response.minSelect());
         assertEquals(5, response.maxSelect());
@@ -106,7 +106,7 @@ public class ModifierGroupServiceTest {
     void getModifierGroups_success() {
         when(modifierGroupRepository.findByStoreId(1L)).thenReturn(List.of(modifierGroup));
 
-        List<ModifierGroupDto> response = modifierGroupService.getModifierGroups(1L);
+        List<ModifierGroupResponse> response = modifierGroupService.getModifierGroups(1L);
         assertEquals(1, response.size());
         assertEquals(1L, response.get(0).id());
     }
@@ -115,7 +115,7 @@ public class ModifierGroupServiceTest {
     void getModifierGroups_returnsEmptyList_whenNoGroups() {
         when(modifierGroupRepository.findByStoreId(1L)).thenReturn(Collections.emptyList());
 
-        List<ModifierGroupDto> response = modifierGroupService.getModifierGroups(1L);
+        List<ModifierGroupResponse> response = modifierGroupService.getModifierGroups(1L);
         assertTrue(response.isEmpty());
     }
 
@@ -130,7 +130,7 @@ public class ModifierGroupServiceTest {
                 1,
                 5
         );
-        ModifierGroupDto response = modifierGroupService.updateModifierGroup(1L, 1L, request);
+        ModifierGroupResponse response = modifierGroupService.updateModifierGroup(1L, 1L, request);
         assertEquals("group", response.name());
         assertTrue(response.required());
         assertEquals(1, response.minSelect());

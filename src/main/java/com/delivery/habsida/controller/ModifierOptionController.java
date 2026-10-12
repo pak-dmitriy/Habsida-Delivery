@@ -1,6 +1,6 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ModifierOptionDto;
+import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.dto.ModifierOptionRequest;
 import com.delivery.habsida.service.ModifierOptionService;
 import jakarta.validation.Valid;
@@ -20,32 +20,32 @@ public class ModifierOptionController {
     }
 
     @PostMapping
-    public ResponseEntity<ModifierOptionDto> createModifierOption(@PathVariable Long storeId,
-                                                                  @PathVariable Long groupId,
-                                                                  @RequestBody @Valid ModifierOptionRequest request) {
-        ModifierOptionDto created = modifierOptionService.createModifierOption(storeId, groupId, request);
+    public ResponseEntity<ModifierOptionResponse> createModifierOption(@PathVariable Long storeId,
+                                                                       @PathVariable Long groupId,
+                                                                       @RequestBody @Valid ModifierOptionRequest request) {
+        ModifierOptionResponse created = modifierOptionService.createModifierOption(storeId, groupId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/{optionId}")
-    public ModifierOptionDto getModifierOption(@PathVariable Long storeId,
-                                               @PathVariable Long groupId,
-                                               @PathVariable Long optionId) {
+    public ModifierOptionResponse getModifierOption(@PathVariable Long storeId,
+                                                    @PathVariable Long groupId,
+                                                    @PathVariable Long optionId) {
         return modifierOptionService.getModifierOption(storeId, groupId, optionId);
     }
 
     @GetMapping
-    public List<ModifierOptionDto> getModifierOptions(@PathVariable Long storeId,
-                                                      @PathVariable Long groupId) {
+    public List<ModifierOptionResponse> getModifierOptions(@PathVariable Long storeId,
+                                                           @PathVariable Long groupId) {
         return modifierOptionService.getModifierOptions(storeId, groupId);
     }
 
     @PutMapping("/{optionId}")
-    public ResponseEntity<ModifierOptionDto> updateModifierOption(@PathVariable Long storeId,
-                                                                  @PathVariable Long groupId,
-                                                                  @PathVariable Long optionId,
-                                                                  @RequestBody @Valid ModifierOptionRequest request) {
-        ModifierOptionDto updated = modifierOptionService.updateModifierOption(storeId, groupId, optionId, request);
+    public ResponseEntity<ModifierOptionResponse> updateModifierOption(@PathVariable Long storeId,
+                                                                       @PathVariable Long groupId,
+                                                                       @PathVariable Long optionId,
+                                                                       @RequestBody @Valid ModifierOptionRequest request) {
+        ModifierOptionResponse updated = modifierOptionService.updateModifierOption(storeId, groupId, optionId, request);
         return ResponseEntity.ok(updated);
     }
 

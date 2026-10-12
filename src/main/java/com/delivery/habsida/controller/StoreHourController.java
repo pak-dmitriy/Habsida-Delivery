@@ -1,6 +1,6 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.StoreHourDto;
+import com.delivery.habsida.dto.StoreHourResponse;
 import com.delivery.habsida.dto.StoreHourRequest;
 import com.delivery.habsida.service.StoreHourService;
 import jakarta.validation.Valid;
@@ -19,29 +19,29 @@ public class StoreHourController {
     }
 
     @PostMapping
-    public ResponseEntity<StoreHourDto> createStoreHour(@PathVariable Long storeId,
-                                                        @RequestBody @Valid StoreHourRequest request) {
-        StoreHourDto created = storeHourService.createStoreHour(storeId, request);
+    public ResponseEntity<StoreHourResponse> createStoreHour(@PathVariable Long storeId,
+                                                             @RequestBody @Valid StoreHourRequest request) {
+        StoreHourResponse created = storeHourService.createStoreHour(storeId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
-    public List<StoreHourDto> getStoreHours(@PathVariable Long storeId) {
+    public List<StoreHourResponse> getStoreHours(@PathVariable Long storeId) {
         return storeHourService.getStoreHours(storeId);
     }
 
     @GetMapping("/{hourId}")
-    public StoreHourDto getStoreHour(@PathVariable Long storeId,
-                                     @PathVariable Long hourId) {
+    public StoreHourResponse getStoreHour(@PathVariable Long storeId,
+                                          @PathVariable Long hourId) {
         return storeHourService.getStoreHour(storeId, hourId);
     }
 
     @PutMapping("/{hourId}")
-    public ResponseEntity<StoreHourDto> updateStoreHour(@PathVariable Long storeId,
-                                                        @PathVariable Long hourId,
-                                                        @RequestBody @Valid StoreHourRequest request) {
-        StoreHourDto updated = storeHourService.updateStoreHour(storeId, hourId, request);
+    public ResponseEntity<StoreHourResponse> updateStoreHour(@PathVariable Long storeId,
+                                                             @PathVariable Long hourId,
+                                                             @RequestBody @Valid StoreHourRequest request) {
+        StoreHourResponse updated = storeHourService.updateStoreHour(storeId, hourId, request);
         return ResponseEntity.ok(updated);
     }
 

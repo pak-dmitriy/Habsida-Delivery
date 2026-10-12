@@ -53,7 +53,7 @@ class CategoryServiceTest {
         category.setDescription("description");
         category.setCategoryPhoto("categoryPhoto");
         category.setStore(store);
-        category.setId(1L);
+        category.setId(5L);
     }
 
     private CategoryCreateRequest defaultRequest() {
@@ -64,15 +64,19 @@ class CategoryServiceTest {
         );
     }
 
-    // Создание категории
     @Test
     void createCategory_shouldCreateCategory() {
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
-        when(categoryRepository.save(any(Category.class))).thenReturn(category);
+        when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         CategoryResponse result = categoryService.createCategory(1L, defaultRequest());
 
-        assertEquals("test", result.name());
+        assertEquals("name", result.name());
+        assertEquals("desc", result.description());
+        assertEquals("photo", result.categoryPhoto());
+        assertEquals(1L, result.storeId());
+
+        verify(categoryRepository).save(any());
     }
 
     @Test
@@ -90,17 +94,16 @@ class CategoryServiceTest {
         when(categoryRepository.findByStoreId(1L, pageable)).thenReturn(new PageImpl<>(List.of(category)));
 
         Page<CategoryResponse> page = categoryService.getCategories(1L, pageable, null);
-
-        CategoryResponse dto = page.getContent().get(0);
+        CategoryResponse response = page.getContent().get(0);
 
         assertEquals(1, page.getContent().size());
-        assertEquals("test", dto.name());
-        assertEquals("description", dto.description());
-        assertEquals("categoryPhoto", dto.categoryPhoto());
-        assertEquals(1L, dto.id());
-        assertEquals(1L, dto.storeId());
+        assertEquals("test", response.name());
+        assertEquals("description", response.description());
+        assertEquals("categoryPhoto", response.categoryPhoto());
+        assertEquals(5L, response.id());
+        assertEquals(1L, response.storeId());
 
-        verify(categoryRepository).findByStoreId(eq(1L), eq(pageable));
+        verify(categoryRepository).findByStoreId(1L, pageable);
     }
 
     @Test
@@ -118,63 +121,67 @@ class CategoryServiceTest {
 
     @Test
     void updateCategory_shouldUpdateCategory() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(categoryRepository.findById(5L)).thenReturn(Optional.of(category));
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
-        CategoryResponse updatedCategory = categoryService.updateCategory(1L, 1L, defaultRequest());
+        CategoryResponse updatedCategory = categoryService.updateCategory(1L, 5L, defaultRequest());
 
         assertEquals("name", updatedCategory.name());
 
-        verify(categoryRepository).findById(1L);
+        verify(categoryRepository).findById(5L);
     }
 
     @Test
     void updateCategory_shouldThrowException_whenCategoryNotFound() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
+        when(categoryRepository.findById(5L)).thenReturn(Optional.empty());
 
         assertThrows(CategoryNotFoundException.class,
-                () -> categoryService.updateCategory(store.getId(), category.getId(), defaultRequest()));
+                () -> categoryService.updateCategory(1L, 5L, defaultRequest()));
 
-        verify(categoryRepository).findById(1L);
+        verify(categoryRepository).findById(5L);
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test
     void updateCategory_shouldThrowException_whenCategoryBelongsToDifferentStore() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(categoryRepository.findById(5L)).thenReturn(Optional.of(category));
 
         assertThrows(CategoryNotFoundException.class,
-                () -> categoryService.updateCategory(99L, 1L, defaultRequest()));
+                () -> categoryService.updateCategory(99L, 5L, defaultRequest()));
 
-        verify(categoryRepository).findById(1L);
+        verify(categoryRepository).findById(5L);
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test
     void deleteCategory_shouldDeleteCategory() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(categoryRepository.findById(5L)).thenReturn(Optional.of(category));
 
-        categoryService.deleteCategory(1L, 1L);
+        categoryService.deleteCategory(1L, 5L);
 
         verify(categoryRepository).delete(category);
     }
 
     @Test
     void deleteCategory_shouldThrowException_whenCategoryNotFound() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
+        when(categoryRepository.findById(5L)).thenReturn(Optional.empty());
 
         assertThrows(CategoryNotFoundException.class,
-                () -> categoryService.deleteCategory(1L, 1L));
+                () -> categoryService.deleteCategory(1L, 5L));
 
-        verify(categoryRepository).findById(1L);
+        verify(categoryRepository).findById(5L);
+        verify(categoryRepository, never()).delete(any());
     }
 
     @Test
     void deleteCategory_shouldThrowException_whenCategoryBelongsToDifferentStore() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(categoryRepository.findById(5L)).thenReturn(Optional.of(category));
 
         assertThrows(CategoryNotFoundException.class,
-                () -> categoryService.deleteCategory(99L, 1L));
+                () -> categoryService.deleteCategory(99L, 5L));
 
-        verify(categoryRepository).findById(1L);
+        verify(categoryRepository).findById(5L);
+        verify(categoryRepository, never()).delete(any());
     }
 }
 

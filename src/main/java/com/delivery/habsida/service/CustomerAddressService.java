@@ -77,6 +77,4 @@ public class CustomerAddressService {
         }
         customerAddressRepository.delete(address);
     }
-
-
 }

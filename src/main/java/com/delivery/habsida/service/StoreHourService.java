@@ -51,6 +51,22 @@ public class StoreHourService {
         storeHour.setDayOff(request.dayOff());
     }
 
+    private void validateBreaksFitNewHours(Long hourId, StoreHourRequest request) {
+        List<StoreBreak> breaks = storeBreakRepository.findAllByStoreHourId(hourId);
+        if (breaks.isEmpty()) {
+            return;
+        }
+        if (Boolean.TRUE.equals(request.dayOff())) {
+            throw new InvalidStoreBreakException("Cannot make the day off while breaks exist");
+        }
+        boolean anyOutside = breaks.stream().anyMatch(b ->
+                b.getStartTime().isBefore(request.openTime())
+                        || b.getEndTime().isAfter(request.closeTime()));
+        if (anyOutside) {
+            throw new InvalidStoreBreakException("Existing breaks do not fit into the new working hours");
+        }
+    }
+
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public StoreHourResponse createStoreHour(Long storeId, StoreHourRequest request) {
@@ -75,6 +91,7 @@ public class StoreHourService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public StoreHourResponse getStoreHour(Long storeId, Long hourId) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+
         return StoreHourResponse.from(storeHour);
     }
 
@@ -82,32 +99,18 @@ public class StoreHourService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public StoreHourResponse updateStoreHour(Long storeId, Long hourId, StoreHourRequest request) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+
         validateBreaksFitNewHours(hourId, request);
         applyRequest(storeHour, request);
+
         return StoreHourResponse.from(storeHourRepository.save(storeHour));
     }
-
-    private void validateBreaksFitNewHours(Long hourId, StoreHourRequest request) {
-        List<StoreBreak> breaks = storeBreakRepository.findByStoreHourId(hourId);
-        if (breaks.isEmpty()) {
-            return;
-        }
-        if (Boolean.TRUE.equals(request.dayOff())) {
-            throw new InvalidStoreBreakException("Cannot make the day off while breaks exist");
-        }
-        boolean anyOutside = breaks.stream().anyMatch(b ->
-                b.getStartTime().isBefore(request.openTime())
-                        || b.getEndTime().isAfter(request.closeTime()));
-        if (anyOutside) {
-            throw new InvalidStoreBreakException("Existing breaks do not fit into the new working hours");
-        }
-    }
-
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public void deleteStoreHour(Long storeId, Long hourId) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+
         storeHourRepository.delete(storeHour);
     }
 }

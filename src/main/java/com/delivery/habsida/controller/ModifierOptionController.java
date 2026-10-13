@@ -1,14 +1,14 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.dto.ModifierOptionRequest;
+import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.service.ModifierOptionService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/stores/{storeId}/modifier-groups/{groupId}/options")
@@ -24,6 +24,7 @@ public class ModifierOptionController {
                                                                        @PathVariable Long groupId,
                                                                        @RequestBody @Valid ModifierOptionRequest request) {
         ModifierOptionResponse created = modifierOptionService.createModifierOption(storeId, groupId, request);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -35,9 +36,9 @@ public class ModifierOptionController {
     }
 
     @GetMapping
-    public List<ModifierOptionResponse> getModifierOptions(@PathVariable Long storeId,
-                                                           @PathVariable Long groupId) {
-        return modifierOptionService.getModifierOptions(storeId, groupId);
+    public Page<ModifierOptionResponse> getModifierOptions(@PathVariable Long storeId,
+                                                           @PathVariable Long groupId, Pageable pageable) {
+        return modifierOptionService.getModifierOptions(storeId, groupId, pageable);
     }
 
     @PutMapping("/{optionId}")
@@ -46,6 +47,7 @@ public class ModifierOptionController {
                                                                        @PathVariable Long optionId,
                                                                        @RequestBody @Valid ModifierOptionRequest request) {
         ModifierOptionResponse updated = modifierOptionService.updateModifierOption(storeId, groupId, optionId, request);
+
         return ResponseEntity.ok(updated);
     }
 
@@ -53,6 +55,7 @@ public class ModifierOptionController {
     public ResponseEntity<Void> deleteModifierOption(@PathVariable Long storeId,
                                                      @PathVariable Long groupId,
                                                      @PathVariable Long optionId) {
+
         modifierOptionService.deleteModifierOption(storeId, groupId, optionId);
         return ResponseEntity.noContent().build();
     }

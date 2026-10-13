@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.dto.ModifierOptionRequest;
+import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.ModifierOption;
 import com.delivery.habsida.exception.InvalidModifierOptionException;
@@ -9,12 +9,13 @@ import com.delivery.habsida.exception.ModifierGroupNotFoundException;
 import com.delivery.habsida.exception.ModifierOptionNotFoundException;
 import com.delivery.habsida.repository.ModifierGroupRepository;
 import com.delivery.habsida.repository.ModifierOptionRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -69,16 +70,16 @@ public class ModifierOptionService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public ModifierOptionResponse getModifierOption(Long storeId, Long groupId, Long optionId) {
         ModifierOption modifierOption = getModifierOptionOrThrow(storeId, groupId, optionId);
+
         return ModifierOptionResponse.from(modifierOption);
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<ModifierOptionResponse> getModifierOptions(Long storeId, Long groupId) {
+    public Page<ModifierOptionResponse> getModifierOptions(Long storeId, Long groupId, Pageable pageable) {
         getModifierGroupOrThrow(storeId, groupId);
 
-        return modifierOptionRepository.findByModifierGroupIdOrderByIdAsc(groupId)
-                .stream()
-                .map(ModifierOptionResponse::from).toList();
+        return modifierOptionRepository.findByModifierGroupIdOrderByIdAsc(groupId, pageable)
+                .map(ModifierOptionResponse::from);
     }
 
     @Transactional
@@ -101,6 +102,7 @@ public class ModifierOptionService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public void deleteModifierOption(Long storeId, Long groupId, Long optionId) {
        ModifierOption modifierOption = getModifierOptionOrThrow(storeId, groupId, optionId);
+
        modifierOptionRepository.delete(modifierOption);
     }
 }

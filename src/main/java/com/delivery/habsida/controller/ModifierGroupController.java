@@ -1,19 +1,18 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.dto.ModifierGroupRequest;
+import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.service.ModifierGroupService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/stores/{storeId}/modifier-groups")
 public class ModifierGroupController {
-
     private final ModifierGroupService modifierGroupService;
 
     public ModifierGroupController(ModifierGroupService modifierGroupService) {
@@ -29,8 +28,8 @@ public class ModifierGroupController {
     }
 
     @GetMapping
-    public List<ModifierGroupResponse> getModifierGroups(@PathVariable Long storeId) {
-        return modifierGroupService.getModifierGroups(storeId);
+    public Page<ModifierGroupResponse> getModifierGroups(@PathVariable Long storeId, Pageable pageable) {
+        return modifierGroupService.getModifierGroups(storeId, pageable);
     }
 
     @GetMapping("/{groupId}")
@@ -44,6 +43,7 @@ public class ModifierGroupController {
                                                                      @PathVariable Long groupId,
                                                                      @RequestBody @Valid ModifierGroupRequest request) {
         ModifierGroupResponse updated = modifierGroupService.updateModifierGroup(storeId, groupId, request);
+
         return ResponseEntity.ok(updated);
     }
 
@@ -51,7 +51,7 @@ public class ModifierGroupController {
     public ResponseEntity<Void> deleteModifierGroup(@PathVariable Long storeId,
                                                     @PathVariable Long groupId) {
         modifierGroupService.deleteModifierGroup(storeId, groupId);
+
         return ResponseEntity.noContent().build();
     }
-
 }

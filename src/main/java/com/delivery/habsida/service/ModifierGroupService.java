@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.dto.ModifierGroupRequest;
+import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.exception.InvalidQuantityException;
@@ -9,11 +9,11 @@ import com.delivery.habsida.exception.ModifierGroupNotFoundException;
 import com.delivery.habsida.exception.StoreNotFoundException;
 import com.delivery.habsida.repository.ModifierGroupRepository;
 import com.delivery.habsida.repository.StoreRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -41,7 +41,6 @@ public class ModifierGroupService {
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public ModifierGroupResponse createModifierGroup(Long storeId, ModifierGroupRequest request) {
-
         validateSelectRange(request);
 
         Store store = storeRepository.findById(storeId)
@@ -53,6 +52,7 @@ public class ModifierGroupService {
         modifierGroup.setRequired(request.required());
         modifierGroup.setMinSelect(request.minSelect());
         modifierGroup.setMaxSelect(request.maxSelect());
+
         return ModifierGroupResponse.from(modifierGroupRepository.save(modifierGroup));
     }
 
@@ -64,17 +64,14 @@ public class ModifierGroupService {
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<ModifierGroupResponse> getModifierGroups(Long storeId) {
-
-        return modifierGroupRepository.findByStoreId(storeId)
-                .stream()
-                .map(ModifierGroupResponse::from).toList();
+    public Page<ModifierGroupResponse> getModifierGroups(Long storeId, Pageable pageable) {
+        return modifierGroupRepository.findByStoreId(storeId, pageable)
+                .map(ModifierGroupResponse::from);
     }
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public ModifierGroupResponse updateModifierGroup(Long storeId, Long groupId, ModifierGroupRequest request) {
-
         validateSelectRange(request);
 
         ModifierGroup modifierGroup = getModifierGroupOrThrow(storeId, groupId);
@@ -90,6 +87,7 @@ public class ModifierGroupService {
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public void deleteModifierGroup(Long storeId, Long groupId) {
         ModifierGroup modifierGroup = getModifierGroupOrThrow(storeId, groupId);
+
         modifierGroupRepository.delete(modifierGroup);
     }
 }

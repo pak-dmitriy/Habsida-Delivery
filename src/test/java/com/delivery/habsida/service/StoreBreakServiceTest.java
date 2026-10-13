@@ -21,7 +21,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -53,8 +52,6 @@ public class StoreBreakServiceTest {
 
         storeHour = new StoreHour();
         storeHour.setId(2L);
-        storeHour.setStore(store);
-        storeHour.setDayOfWeek(DayOfWeek.MONDAY);
         storeHour.setOpenTime(LocalTime.of(9, 0));
         storeHour.setCloseTime(LocalTime.of(18, 0));
     }
@@ -123,10 +120,10 @@ public class StoreBreakServiceTest {
         StoreBreakResponse response = page.getContent().get(0);
 
         assertEquals(1, page.getContent().size());
-        assertEquals(1L, response.id());
+        assertEquals(5L, response.id());
         assertEquals(LocalTime.of(12, 0), response.startTime());
         assertEquals(LocalTime.of(13, 0), response.endTime());
-        assertEquals(5L, response.storeHourId());
+        assertEquals(2L, response.storeHourId());
 
         verify(storeBreakRepository).findByStoreHourId(2L, pageable);
     }

@@ -2,7 +2,6 @@ package com.delivery.habsida.controller;
 
 import com.delivery.habsida.dto.ModifierGroupRequest;
 import com.delivery.habsida.dto.ModifierGroupResponse;
-import com.delivery.habsida.exception.InvalidQuantityException;
 import com.delivery.habsida.exception.ModifierGroupNotFoundException;
 import com.delivery.habsida.security.JwtService;
 import com.delivery.habsida.security.WebSecurityConfig;

@@ -1,8 +1,10 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
+import com.delivery.habsida.dto.ModifierGroupWithOptionsResponse;
 import com.delivery.habsida.dto.ProductModifierGroupResponse;
 import com.delivery.habsida.service.ProductModifierGroupService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,9 +29,10 @@ public class ProductModifierGroupController {
     }
 
     @GetMapping
-    public List<ModifierGroupWithOptionsDto> getModifierGroupWithOptions(@PathVariable Long storeId,
-                                                                         @PathVariable Long productId) {
-        return productModifierGroupService.getModifierGroupWithOptions(storeId, productId);
+    public Page<ModifierGroupWithOptionsResponse> getModifierGroupWithOptions(@PathVariable Long storeId,
+                                                                              @PathVariable Long productId,
+                                                                              Pageable pageable) {
+        return productModifierGroupService.getModifierGroupWithOptions(storeId, productId, pageable);
     }
 
     @DeleteMapping("/{groupId}")

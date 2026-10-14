@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
+import com.delivery.habsida.dto.ModifierGroupWithOptionsResponse;
 import com.delivery.habsida.dto.ProductModifierGroupResponse;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.Product;
@@ -12,6 +12,8 @@ import com.delivery.habsida.exception.ProductNotFoundException;
 import com.delivery.habsida.repository.ModifierGroupRepository;
 import com.delivery.habsida.repository.ProductModifierGroupRepository;
 import com.delivery.habsida.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,11 +67,11 @@ public class ProductModifierGroupService {
     }
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication,#storeId)")
-    public List<ModifierGroupWithOptionsDto> getModifierGroupWithOptions(Long storeId, Long productId) {
+    public Page<ModifierGroupWithOptionsResponse> getModifierGroupWithOptions(Long storeId, Long productId, Pageable pageable) {
         getProductOrThrow(storeId, productId);
-        return productModifierGroupRepository.findByProductId(productId)
-                .stream()
-                .map(productModifierGroup-> ModifierGroupWithOptionsDto.from(productModifierGroup.getModifierGroup())).toList();
+
+        return productModifierGroupRepository.findByProductId(productId, pageable)
+                .map(productModifierGroup-> ModifierGroupWithOptionsResponse.from(productModifierGroup.getModifierGroup()));
     }
 
     @Transactional
@@ -80,6 +82,7 @@ public class ProductModifierGroupService {
 
         ProductModifierGroup productModifierGroup = productModifierGroupRepository.findByProductIdAndModifierGroupId(productId, groupId)
                 .orElseThrow(() -> new ProductModifierGroupNotFoundException("Product modifier group not found"));
+
         productModifierGroupRepository.delete(productModifierGroup);
     }
 }

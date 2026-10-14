@@ -1,6 +1,5 @@
 package com.delivery.habsida.repository;
 
-import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.StoreDeliveryRestriction;
 import org.springframework.data.jpa.repository.JpaRepository;
 

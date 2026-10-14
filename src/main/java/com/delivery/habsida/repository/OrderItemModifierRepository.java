@@ -1,6 +1,5 @@
 package com.delivery.habsida.repository;
 
-import com.delivery.habsida.entity.OrderItem;
 import com.delivery.habsida.entity.OrderItemModifier;
 import org.springframework.data.jpa.repository.JpaRepository;
 

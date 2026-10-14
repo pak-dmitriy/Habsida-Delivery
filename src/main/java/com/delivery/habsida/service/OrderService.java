@@ -5,6 +5,8 @@ import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.*;
 import com.delivery.habsida.repository.*;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -123,13 +125,13 @@ public class OrderService {
         BigDecimal deliveryFee;
         StoreDeliverySetting deliverySetting = null;
         if (orderCreateRequest.type() == OrderType.DELIVERY) {
-           deliverySetting = storeDeliverySettingRepository.findByStoreId(storeId)
+            deliverySetting = storeDeliverySettingRepository.findByStoreId(storeId)
                     .orElseThrow(() -> new StoreDeliverySettingNotFoundException("Delivery setting not found"));
             if (!deliverySetting.getDeliveryEnabled()) {
                 throw new DeliveryNotAvailableException("Delivery not available");
             }
 
-            if (storeDeliveryRestrictionRepository.existsByRestrictedAreaAndStoreId(customerAddress.getCity(), storeId) ) {
+            if (storeDeliveryRestrictionRepository.existsByRestrictedAreaAndStoreId(customerAddress.getCity(), storeId)) {
                 throw new DeliveryNotAvailableException("Delivery not available in this zone");
             }
 
@@ -215,11 +217,11 @@ public class OrderService {
             finalOrderSubtotal = finalOrderSubtotal.add(item.getSubtotal());
         }
 
-        if(deliverySetting != null && finalOrderSubtotal.compareTo(deliverySetting.getMinOrderPrice()) < 0) {
+        if (deliverySetting != null && finalOrderSubtotal.compareTo(deliverySetting.getMinOrderPrice()) < 0) {
             throw new MinOrderPriceNotReachedException("Order total is below the minimum: " + deliverySetting.getMinOrderPrice());
         }
 
-        if(deliverySetting != null && finalOrderSubtotal.compareTo(deliverySetting.getFreeDeliveryThreshold()) >= 0
+        if (deliverySetting != null && finalOrderSubtotal.compareTo(deliverySetting.getFreeDeliveryThreshold()) >= 0
                 && deliverySetting.getFreeDeliveryThreshold().compareTo(BigDecimal.ZERO) > 0) {
             deliveryFee = BigDecimal.ZERO;
         }
@@ -372,33 +374,36 @@ public class OrderService {
     }
 
     @Transactional
-    public List<OrderResponse> getNewOrders(Long storeId) {
-        List<Order> orders = orderRepository.findByStoreIdAndOrderStatus(storeId, CREATED);
-        List<Long> orderIds = orders.stream()
-                .map(Order::getId)
-                .toList();
+    public Page<OrderResponse> getNewOrders(Long storeId, Pageable pageable) {
+        Page<Order> ordersPage = orderRepository.findByStoreIdAndOrderStatus(storeId, CREATED, pageable);
+        List<Long> orderIds = ordersPage.getContent().stream()
+                .map(Order::getId).toList();
+
         List<OrderItem> allItems = orderItemRepository.findByOrderIdIn(orderIds);
         Map<Long, List<OrderItem>> itemsByOrderId = allItems.stream()
                 .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
         List<Long> itemIds = allItems.stream()
                 .map(OrderItem::getId)
                 .toList();
+
         List<OrderItemModifier> allModifiers = orderItemModifierRepository.findByOrderItemIdIn(itemIds);
         Map<Long, List<OrderItemModifier>> modifiersByItemId = allModifiers.stream()
                 .collect(Collectors.groupingBy(modifier -> modifier.getOrderItem().getId()));
-        return orders.stream()
+
+        return ordersPage
                 .map(order -> {
-                    List<OrderItem> items = itemsByOrderId.getOrDefault(order.getId(), List.of());
-                    List<OrderItemResponse> itemDtos = items.stream()
-                            .map(item -> {
-                                List<OrderItemModifier> modifierEntities = modifiersByItemId.getOrDefault(item.getId(), List.of());
-                                List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
-                                        .map(OrderItemModifierResponse::from)
-                                        .toList();
-                                return OrderItemResponse.from(item, modifierDtos);
-                            }).toList();
-                    return OrderResponse.from(order, itemDtos);
-                })
-                .toList();
+                            List<OrderItem> items = itemsByOrderId.getOrDefault(order.getId(), List.of());
+                            List<OrderItemResponse> itemDtos = items.stream()
+                                    .map(item -> {
+                                        List<OrderItemModifier> modifierEntities = modifiersByItemId.getOrDefault(item.getId(), List.of());
+                                        List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                                                .map(OrderItemModifierResponse::from)
+                                                .toList();
+                                        return OrderItemResponse.from(item, modifierDtos);
+                                    }).toList();
+                            return OrderResponse.from(order, itemDtos);
+                        }
+                );
     }
 }

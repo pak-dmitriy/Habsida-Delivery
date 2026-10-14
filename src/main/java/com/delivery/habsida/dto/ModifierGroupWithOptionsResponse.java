@@ -4,7 +4,7 @@ import com.delivery.habsida.entity.ModifierGroup;
 
 import java.util.List;
 
-public record ModifierGroupWithOptionsDto(
+public record ModifierGroupWithOptionsResponse(
         Long id,
         String name,
         boolean required,
@@ -12,8 +12,8 @@ public record ModifierGroupWithOptionsDto(
         Integer maxSelect,
         List<ModifierOptionResponse> options
 ) {
-    public static ModifierGroupWithOptionsDto from(ModifierGroup modifierGroup) {
-        return new ModifierGroupWithOptionsDto(
+    public static ModifierGroupWithOptionsResponse from(ModifierGroup modifierGroup) {
+        return new ModifierGroupWithOptionsResponse(
                 modifierGroup.getId(),
                 modifierGroup.getName(),
                 modifierGroup.isRequired(),

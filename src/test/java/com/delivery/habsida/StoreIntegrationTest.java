@@ -62,8 +62,8 @@ public class StoreIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/stores")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].storeSlug").value("own-store"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].storeSlug").value("own-store"));
     }
 
     @Test
@@ -76,6 +76,6 @@ public class StoreIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/stores")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].storeSlug", hasItems("admin-store-1", "admin-store-2")));
+                .andExpect(jsonPath("$.content[*].storeSlug", hasItems("admin-store-1", "admin-store-2")));
     }
 }

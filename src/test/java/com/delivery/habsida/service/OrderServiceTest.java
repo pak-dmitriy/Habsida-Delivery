@@ -192,7 +192,7 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
@@ -279,7 +279,7 @@ class OrderServiceTest {
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
 
         assertThrows(MinOrderPriceNotReachedException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -301,7 +301,7 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
@@ -334,7 +334,7 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
 
         OrderResponse result = orderService.createOrder(1L, updateDeliveryType);

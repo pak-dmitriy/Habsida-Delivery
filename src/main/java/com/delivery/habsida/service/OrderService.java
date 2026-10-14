@@ -193,7 +193,7 @@ public class OrderService {
                 }
             }
 
-            for (ProductModifierGroup productModifierGroup : productModifierGroupRepository.findByProductId(product.getId())) {
+            for (ProductModifierGroup productModifierGroup : productModifierGroupRepository.findAllByProductId(product.getId())) {
                 ModifierGroup group = productModifierGroup.getModifierGroup();
                 int selected = selectCount.getOrDefault(group.getId(), 0);
                 if (selected < group.getMinSelect()) {

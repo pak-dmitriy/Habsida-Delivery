@@ -12,6 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.math.BigDecimal;
@@ -56,6 +60,8 @@ class OrderServiceTest {
     @Mock
     private StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository;
 
+    private final Pageable pageable = PageRequest.of(0, 10);
+
     @InjectMocks
     private OrderService orderService;
 
@@ -63,7 +69,6 @@ class OrderServiceTest {
     private Customer customer;
     private CustomerAddress customerAddress;
     private Product product;
-    private Order order;
     private ModifierOption modifierOption;
     private OrderItemModifier orderItemModifier;
     private ModifierGroup modifierGroup;
@@ -78,22 +83,15 @@ class OrderServiceTest {
         store.setId(1L);
 
         customer = new Customer();
-        customer.setId(1L);
+        customer.setId(2L);
 
         customerAddress = new CustomerAddress();
-        customerAddress.setId(1L);
+        customerAddress.setId(3L);
         customerAddress.setCity("City");
         customerAddress.setCustomer(customer);
 
-        order = new Order();
-        order.setId(1L);
-        order.setStore(store);
-        order.setOrderStatus(OrderStatus.CREATED);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
-
         orderItemModifier = new OrderItemModifier();
-        orderItemModifier.setId(1L);
+        orderItemModifier.setId(5L);
         orderItemModifier.setOptionName("Double size");
         orderItemModifier.setPriceDelta(new BigDecimal("10.2"));
 
@@ -104,6 +102,19 @@ class OrderServiceTest {
         modifierGroup = defaultModifierGroup();
         modifierOption = defaultOption(modifierGroup);
         productModifierGroup = attachGroupToProduct(product, modifierGroup);
+    }
+
+    private Order defaultOrder() {
+        Order order = new Order();
+        order.setId(6L);
+        order.setOrderNumber("1");
+        order.setOrderStatus(OrderStatus.CREATED);
+        order.setTotal(new BigDecimal("10.2"));
+        order.setStore(store);
+        order.setCustomer(customer);
+        order.setCustomerAddress(customerAddress);
+
+        return order;
     }
 
     private OrderCreateRequest defaultRequest() {
@@ -471,7 +482,7 @@ class OrderServiceTest {
     @Test
     void createOrder_shouldThrowException_whenAddressBelongsToDifferentCustomer() {
         Customer anotherCustomer = new Customer();
-        anotherCustomer.setId(2L);
+        anotherCustomer.setId(9L);
         customerAddress.setCustomer(anotherCustomer);
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
@@ -544,27 +555,32 @@ class OrderServiceTest {
 
     @Test
     void acceptOrder_shouldSucceed_whenTransitionIsValid() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        Order order = defaultOrder();
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
+
         OrderResponse result = orderService.acceptOrder(1L, order.getId());
         assertEquals(OrderStatus.ACCEPTED, result.orderStatus());
     }
 
     @Test
     void acceptOrder_shouldThrowException_whenOrderNotFound() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(orderRepository.findById(6L)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class,
-                () -> orderService.acceptOrder(1L, 1L));
+                () -> orderService.acceptOrder(1L, 6L));
     }
 
     @Test
     void acceptOrder_shouldThrowException_whenOrderBelongsToDifferentStore() {
+        Order order = defaultOrder();
+
         Store anotherStore = new Store();
         anotherStore.setId(2L);
         order.setStore(anotherStore);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(OrderNotFoundException.class,
                 () -> orderService.acceptOrder(1L, order.getId()));
@@ -572,9 +588,11 @@ class OrderServiceTest {
 
     @Test
     void acceptOrder_shouldThrowException_whenTransitionIsInvalid() {
+        Order order = defaultOrder();
+
         order.setOrderStatus(OrderStatus.COMPLETED);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.acceptOrder(1L, order.getId()));
@@ -582,10 +600,9 @@ class OrderServiceTest {
 
     @Test
     void rejectOrder_shouldSucceed_whenTransitionIsValid() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
         OrderResponse result = orderService.rejectOrder(1L, order.getId(), "Out of stock");
@@ -595,9 +612,11 @@ class OrderServiceTest {
 
     @Test
     void rejectOrder_shouldThrowException_whenTransitionIsInvalid() {
+        Order order = defaultOrder();
+
         order.setOrderStatus(OrderStatus.COMPLETED);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.rejectOrder(1L, order.getId(), "Out of stock"));
@@ -605,10 +624,9 @@ class OrderServiceTest {
 
     @Test
     void cancelOrder_shouldSucceed_whenTransitionIsValid() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
         OrderResponse result = orderService.cancelOrder(1L, order.getId());
@@ -618,9 +636,11 @@ class OrderServiceTest {
 
     @Test
     void cancelOrder_shouldThrowException_whenTransitionIsInvalid() {
+        Order order = defaultOrder();
+
         order.setOrderStatus(OrderStatus.COMPLETED);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.cancelOrder(1L, order.getId()));
@@ -628,11 +648,10 @@ class OrderServiceTest {
 
     @Test
     void startOrder_shouldSucceed_whenTransitionIsValid() {
+        Order order = defaultOrder();
         order.setOrderStatus(OrderStatus.ACCEPTED);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
         OrderResponse result = orderService.startOrder(1L, order.getId());
@@ -642,7 +661,9 @@ class OrderServiceTest {
 
     @Test
     void startOrder_shouldThrowException_whenTransitionIsInvalid() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        Order order = defaultOrder();
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.startOrder(1L, order.getId()));
@@ -650,11 +671,10 @@ class OrderServiceTest {
 
     @Test
     void completeOrder_shouldSucceed_whenTransitionIsValid() {
+        Order order = defaultOrder();
         order.setOrderStatus(OrderStatus.IN_PROGRESS);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
         OrderResponse result = orderService.completeOrder(1L, order.getId());
@@ -664,7 +684,9 @@ class OrderServiceTest {
 
     @Test
     void completeOrder_shouldThrowException_whenTransitionIsInvalid() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        Order order = defaultOrder();
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.completeOrder(1L, order.getId()));
@@ -672,27 +694,32 @@ class OrderServiceTest {
 
     @Test
     void getNewOrders_shouldReturnOrderList() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findByStoreIdAndOrderStatus(1L, OrderStatus.CREATED))
-                .thenReturn(List.of(order));
+        when(orderRepository.findByStoreIdAndOrderStatus(1L, OrderStatus.CREATED, pageable))
+                .thenReturn(new PageImpl<>(List.of(order)));
         when(orderItemRepository.findByOrderIdIn(List.of(order.getId())))
                 .thenReturn(List.of());
 
-        List<OrderResponse> result = orderService.getNewOrders(1L);
+        Page<OrderResponse> page = orderService.getNewOrders(1L, pageable);
+        OrderResponse response = page.getContent().get(0);
 
-        assertEquals(1, result.size());
-        assertEquals(OrderStatus.CREATED, result.get(0).orderStatus());
+        assertEquals(1, page.getContent().size());
+        assertEquals(6L, response.id());
+        assertEquals("1", response.orderNumber());
+        assertEquals(OrderStatus.CREATED, response.orderStatus());
+        assertEquals(new BigDecimal("10.2"), response.total());
+        assertEquals(1L, response.storeId());
+        assertEquals(2L, response.customerId());
+        assertEquals(3L, response.customerAddressId());
     }
 
     @Test
     void cancelOrder_shouldSucceed_whenOrderIsAccepted() {
+        Order order = defaultOrder();
         order.setOrderStatus(OrderStatus.ACCEPTED);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
         OrderResponse result = orderService.cancelOrder(1L, order.getId());
@@ -702,10 +729,9 @@ class OrderServiceTest {
 
     @Test
     void acceptOrder_shouldPropagateException_whenVersionConflictOccurs() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order))
                 .thenThrow(new ObjectOptimisticLockingFailureException(Order.class, order.getId()));
 

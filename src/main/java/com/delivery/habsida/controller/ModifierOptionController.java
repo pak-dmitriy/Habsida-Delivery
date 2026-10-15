@@ -4,6 +4,7 @@ import com.delivery.habsida.dto.ModifierOptionRequest;
 import com.delivery.habsida.dto.ModifierOptionResponse;
 import com.delivery.habsida.service.ModifierOptionService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class ModifierOptionController {
 
     @GetMapping
     public Page<ModifierOptionResponse> getModifierOptions(@PathVariable Long storeId,
-                                                           @PathVariable Long groupId, Pageable pageable) {
+                                                           @PathVariable Long groupId, @ParameterObject Pageable pageable) {
         return modifierOptionService.getModifierOptions(storeId, groupId, pageable);
     }
 

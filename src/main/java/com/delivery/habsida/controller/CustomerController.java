@@ -6,6 +6,7 @@ import com.delivery.habsida.dto.CustomerResponse;
 import com.delivery.habsida.dto.CustomerUpdateRequest;
 import com.delivery.habsida.service.CustomerService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class CustomerController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public Page<CustomerResponse> getAllCustomers(Pageable pageable) {
+    public Page<CustomerResponse> getAllCustomers(@ParameterObject Pageable pageable) {
         return customerService.getAllCustomers(pageable);
     }
 

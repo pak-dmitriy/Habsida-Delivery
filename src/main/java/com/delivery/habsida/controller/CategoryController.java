@@ -4,6 +4,7 @@ import com.delivery.habsida.dto.CategoryCreateRequest;
 import com.delivery.habsida.dto.CategoryResponse;
 import com.delivery.habsida.service.CategoryService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ public class CategoryController {
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     @GetMapping
-    public Page<CategoryResponse> getCategories(@PathVariable Long storeId, Pageable pageable, Authentication authentication) {
+    public Page<CategoryResponse> getCategories(@PathVariable Long storeId, @ParameterObject Pageable pageable, Authentication authentication) {
         return categoryService.getCategories(storeId, pageable, authentication);
     }
 

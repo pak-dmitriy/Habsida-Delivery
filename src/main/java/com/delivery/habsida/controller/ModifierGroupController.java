@@ -4,6 +4,7 @@ import com.delivery.habsida.dto.ModifierGroupRequest;
 import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.service.ModifierGroupService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ public class ModifierGroupController {
     }
 
     @GetMapping
-    public Page<ModifierGroupResponse> getModifierGroups(@PathVariable Long storeId, Pageable pageable) {
+    public Page<ModifierGroupResponse> getModifierGroups(@PathVariable Long storeId, @ParameterObject Pageable pageable) {
         return modifierGroupService.getModifierGroups(storeId, pageable);
     }
 

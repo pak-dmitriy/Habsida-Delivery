@@ -5,6 +5,7 @@ import com.delivery.habsida.dto.ProductResponse;
 import com.delivery.habsida.entity.ProductStatus;
 import com.delivery.habsida.service.ProductService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class ProductController {
     @GetMapping
     public Page<ProductResponse> getProducts(@PathVariable Long storeId,
                                              @RequestParam(required = false) Long categoryId,
-                                             @RequestParam(required = false) ProductStatus status,
+                                             @RequestParam(required = false) ProductStatus status, @ParameterObject
                                              Pageable pageable) {
         return productService.getProducts(storeId, categoryId, status, pageable);
     }

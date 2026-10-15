@@ -4,6 +4,7 @@ import com.delivery.habsida.dto.CustomerAddressCreateRequest;
 import com.delivery.habsida.dto.CustomerAddressResponse;
 import com.delivery.habsida.service.CustomerAddressService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class CustomerAddressController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public Page<CustomerAddressResponse> getAddresses(@PathVariable Long customerId, Pageable pageable) {
+    public Page<CustomerAddressResponse> getAddresses(@PathVariable Long customerId, @ParameterObject Pageable pageable) {
 
         return customerAddressService.getAddressesByCustomerId(customerId, pageable);
     }

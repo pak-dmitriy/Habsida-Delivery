@@ -4,6 +4,7 @@ import com.delivery.habsida.dto.StoreCreateRequest;
 import com.delivery.habsida.dto.StoreResponse;
 import com.delivery.habsida.service.StoreService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class StoreController {
     }
 
     @GetMapping
-    public Page<StoreResponse> getStores(Authentication authentication, Pageable pageable) {
+    public Page<StoreResponse> getStores(Authentication authentication, @ParameterObject Pageable pageable) {
         return storeService.getStores(authentication, pageable);
     }
 

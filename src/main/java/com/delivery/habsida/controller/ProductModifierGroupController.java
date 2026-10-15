@@ -3,6 +3,7 @@ package com.delivery.habsida.controller;
 import com.delivery.habsida.dto.ModifierGroupWithOptionsResponse;
 import com.delivery.habsida.dto.ProductModifierGroupResponse;
 import com.delivery.habsida.service.ProductModifierGroupService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class ProductModifierGroupController {
     @GetMapping
     public Page<ModifierGroupWithOptionsResponse> getModifierGroupWithOptions(@PathVariable Long storeId,
                                                                               @PathVariable Long productId,
-                                                                              Pageable pageable) {
+                                                                              @ParameterObject Pageable pageable) {
         return productModifierGroupService.getModifierGroupWithOptions(storeId, productId, pageable);
     }
 

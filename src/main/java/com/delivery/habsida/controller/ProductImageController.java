@@ -4,6 +4,7 @@ import com.delivery.habsida.dto.ProductImageResponse;
 import com.delivery.habsida.dto.ProductImageRequest;
 import com.delivery.habsida.service.ProductImageService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class ProductImageController {
 
     @GetMapping
     public Page<ProductImageResponse> getProductImages(@PathVariable Long storeId,
-                                                       @PathVariable Long productId, Pageable pageable) {
+                                                       @PathVariable Long productId, @ParameterObject Pageable pageable) {
         return productImageService.getProductImages(storeId, productId, pageable);
     }
 

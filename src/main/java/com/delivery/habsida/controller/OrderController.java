@@ -5,6 +5,7 @@ import com.delivery.habsida.dto.OrderRejectRequest;
 import com.delivery.habsida.dto.OrderResponse;
 import com.delivery.habsida.service.OrderService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -67,7 +68,7 @@ public class OrderController {
 
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     @GetMapping("/new")
-    public Page<OrderResponse> newOrder(@PathVariable Long storeId, Pageable pageable) {
+    public Page<OrderResponse> newOrder(@PathVariable Long storeId, @ParameterObject Pageable pageable) {
         return orderService.getNewOrders(storeId, pageable);
     }
 }

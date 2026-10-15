@@ -85,7 +85,7 @@ class ProductControllerTest {
     void createProduct_shouldReturn201_whenRequestIsValid() throws Exception {
         when(productService.createProduct(anyLong(), any())).thenReturn(defaultResponse());
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/stores/{storeId}/products/{productId}", 1L, 1L)
+        mockMvc.perform(MockMvcRequestBuilders.post("/stores/{storeId}/products", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(defaultRequest())))
                 .andExpect(status().isCreated())
@@ -120,7 +120,7 @@ class ProductControllerTest {
                 1L
         );
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/stores/{storeId}/products/{productId}", 1L, 1L)
+        mockMvc.perform(MockMvcRequestBuilders.post("/stores/{storeId}/products", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());

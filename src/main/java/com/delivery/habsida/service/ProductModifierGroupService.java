@@ -68,8 +68,8 @@ public class ProductModifierGroupService {
     public Page<ModifierGroupWithOptionsResponse> getModifierGroupWithOptions(Long storeId, Long productId, Pageable pageable) {
         getProductOrThrow(storeId, productId);
 
-        return productModifierGroupRepository.findByProductId(productId, pageable)
-                .map(productModifierGroup-> ModifierGroupWithOptionsResponse.from(productModifierGroup.getModifierGroup()));
+        return modifierGroupRepository.findModifierGroupsByProductId(productId, pageable)
+                .map(ModifierGroupWithOptionsResponse::from);
     }
 
     @Transactional

@@ -10,7 +10,5 @@ import java.util.List;
 public interface UserStoreAccessRepository extends JpaRepository<UserStoreAccess, Long> {
     boolean existsByUserIdAndStoreId(Long userId, Long storeId);
 
-    Page<UserStoreAccess> findByUserId(Long userId, Pageable pageable);
-
     List<UserStoreAccess> findAllByUserId(Long userId);
 }

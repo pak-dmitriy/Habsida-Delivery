@@ -3,10 +3,8 @@ package com.delivery.habsida.service;
 import com.delivery.habsida.dto.StoreCreateRequest;
 import com.delivery.habsida.dto.StoreResponse;
 import com.delivery.habsida.entity.Store;
-import com.delivery.habsida.entity.UserStoreAccess;
 import com.delivery.habsida.exception.StoreNotFoundException;
 import com.delivery.habsida.repository.StoreRepository;
-import com.delivery.habsida.repository.UserStoreAccessRepository;
 import com.delivery.habsida.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,11 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StoreService {
     private final StoreRepository storeRepository;
-    private final UserStoreAccessRepository userStoreAccessRepository;
 
-    public StoreService(StoreRepository storeRepository, UserStoreAccessRepository userStoreAccessRepository) {
+    public StoreService(StoreRepository storeRepository) {
         this.storeRepository = storeRepository;
-        this.userStoreAccessRepository = userStoreAccessRepository;
     }
 
     @Transactional
@@ -55,10 +51,9 @@ public class StoreService {
         }
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        Page<UserStoreAccess> userStoreAccesses = userStoreAccessRepository.findByUserId(userPrincipal.userId(), pageable);
+        Page<Store> stores = storeRepository.findStoresByUserId(userPrincipal.userId(), pageable);
 
-        return userStoreAccesses
-                .map(UserStoreAccess::getStore)
+        return stores
                 .map(StoreResponse::from);
     }
 

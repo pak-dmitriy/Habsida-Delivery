@@ -117,7 +117,7 @@ class StoreServiceTest {
         assertEquals(new BigDecimal("5.00"), response.deliveryFee());
 
         verify(storeRepository).findAll(pageable);
-        verify(userStoreAccessRepository, never()).findByUserId(any(), any());
+        verify(userStoreAccessRepository, never()).findAllByUserId(anyLong());
     }
 
     @Test
@@ -128,7 +128,7 @@ class StoreServiceTest {
         doReturn(List.of(new SimpleGrantedAuthority("ROLE_MERCHANT")))
                 .when(authentication).getAuthorities();
         when(authentication.getPrincipal()).thenReturn(new UserPrincipal(3L, "merchant@merchant"));
-        when(userStoreAccessRepository.findByUserId(3L, pageable)).thenReturn(new PageImpl<>(List.of(userStoreAccess)));
+        when(storeRepository.findStoresByUserId(3L, pageable)).thenReturn(new PageImpl<>(List.of(defaultStore())));
 
         Page<StoreResponse> page = storeService.getStores(authentication, pageable);
         StoreResponse response = page.getContent().get(0);
@@ -144,7 +144,7 @@ class StoreServiceTest {
         assertEquals(Status.ACTIVE, response.status());
         assertEquals(new BigDecimal("5.00"), response.deliveryFee());
 
-        verify(userStoreAccessRepository).findByUserId(3L, pageable);
+        verify(storeRepository).findStoresByUserId(3L, pageable);
     }
 
     @Test
@@ -154,13 +154,13 @@ class StoreServiceTest {
                 .when(authentication).getAuthorities();
         when(authentication.getPrincipal())
                 .thenReturn(new UserPrincipal(3L, "merchant@merchant"));
-        when(userStoreAccessRepository.findByUserId(3L, pageable)).thenReturn(new PageImpl<>(List.of()));
+        when(storeRepository.findStoresByUserId(3L, pageable)).thenReturn(new PageImpl<>(List.of()));
 
         Page<StoreResponse> result = storeService.getStores(authentication, pageable);
 
         assertTrue(result.isEmpty());
 
-        verify(userStoreAccessRepository).findByUserId(3L, pageable);
+        verify(storeRepository).findStoresByUserId(3L, pageable);
         verify(storeRepository, never()).findAll(any(Pageable.class));
     }
 

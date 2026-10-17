@@ -3,23 +3,37 @@ package com.delivery.habsida.service;
 import com.delivery.habsida.dto.StoreCreateRequest;
 import com.delivery.habsida.dto.StoreResponse;
 import com.delivery.habsida.entity.Store;
+import com.delivery.habsida.exception.InvalidQueryParameterException;
 import com.delivery.habsida.exception.StoreNotFoundException;
 import com.delivery.habsida.repository.StoreRepository;
 import com.delivery.habsida.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
 @Transactional(readOnly = true)
 @Service
 public class StoreService {
     private final StoreRepository storeRepository;
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "name", "storeSlug");
 
     public StoreService(StoreRepository storeRepository) {
         this.storeRepository = storeRepository;
+    }
+
+    private void validatePageableSort(Pageable pageable) {
+        for (Sort.Order element : pageable.getSort()) {
+            String sortField = element.getProperty();
+            if (!ALLOWED_SORT_FIELDS.contains(sortField)) {
+                throw new InvalidQueryParameterException("Invalid sort field: " + sortField);
+            }
+        }
     }
 
     @Transactional
@@ -43,6 +57,8 @@ public class StoreService {
     }
 
     public Page<StoreResponse> getStores(Authentication authentication, Pageable pageable) {
+        validatePageableSort(pageable);
+
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (isAdmin) {

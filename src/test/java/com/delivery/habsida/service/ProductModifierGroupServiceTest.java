@@ -112,7 +112,7 @@ public class ProductModifierGroupServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(product));
-        when(productModifierGroupRepository.findByProductId(2L, pageable)).thenReturn(new PageImpl<>(List.of(defaultLink())));
+        when(modifierGroupRepository.findModifierGroupsByProductId(2L, pageable)).thenReturn(new PageImpl<>(List.of(modifierGroup)));
 
         Page<ModifierGroupWithOptionsResponse> page = productModifierGroupService.getModifierGroupWithOptions(1L, 2L, pageable);
 
@@ -131,7 +131,7 @@ public class ProductModifierGroupServiceTest {
         assertEquals(new BigDecimal("10.2"), option.priceDelta());
         assertFalse(option.isFree());
 
-        verify(productModifierGroupRepository).findByProductId(2L, pageable);
+        verify(modifierGroupRepository).findModifierGroupsByProductId(2L, pageable);
     }
 
     @Test

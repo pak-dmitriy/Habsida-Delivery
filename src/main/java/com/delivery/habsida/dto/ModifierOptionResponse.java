@@ -4,7 +4,7 @@ import com.delivery.habsida.entity.ModifierOption;
 
 import java.math.BigDecimal;
 
-public record ModifierOptionDto(
+public record ModifierOptionResponse(
 
         Long id,
         Long modifierGroupId,
@@ -13,8 +13,8 @@ public record ModifierOptionDto(
         boolean isFree
 
 ) {
-    public static ModifierOptionDto from(ModifierOption option) {
-        return new ModifierOptionDto(
+    public static ModifierOptionResponse from(ModifierOption option) {
+        return new ModifierOptionResponse(
                 option.getId(),
                 option.getModifierGroup().getId(),
                 option.getName(),

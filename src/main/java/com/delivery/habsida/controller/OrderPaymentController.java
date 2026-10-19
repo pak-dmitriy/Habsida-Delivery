@@ -1,6 +1,6 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.OrderPaymentDto;
+import com.delivery.habsida.dto.OrderPaymentResponse;
 import com.delivery.habsida.dto.OrderPaymentRequest;
 import com.delivery.habsida.service.OrderPaymentService;
 import jakarta.validation.Valid;
@@ -19,18 +19,18 @@ public class OrderPaymentController {
 
     @GetMapping
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ResponseEntity<OrderPaymentDto> getOrderPayment(@PathVariable Long storeId,
-                                           @PathVariable Long orderId) {
-        OrderPaymentDto result = orderPaymentService.getOrderPayment(storeId, orderId);
+    public ResponseEntity<OrderPaymentResponse> getOrderPayment(@PathVariable Long storeId,
+                                                                @PathVariable Long orderId) {
+        OrderPaymentResponse result = orderPaymentService.getOrderPayment(storeId, orderId);
         return ResponseEntity.ok(result);
     }
 
     @PutMapping
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public ResponseEntity<OrderPaymentDto> updateOrderPayment(@PathVariable Long storeId,
-                                                              @PathVariable Long orderId,
-                                                              @Valid @RequestBody OrderPaymentRequest request) {
-        OrderPaymentDto updated = orderPaymentService.updateOrderPayment(storeId, orderId, request);
+    public ResponseEntity<OrderPaymentResponse> updateOrderPayment(@PathVariable Long storeId,
+                                                                   @PathVariable Long orderId,
+                                                                   @Valid @RequestBody OrderPaymentRequest request) {
+        OrderPaymentResponse updated = orderPaymentService.updateOrderPayment(storeId, orderId, request);
         return ResponseEntity.ok(updated);
     }
 }

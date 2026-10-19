@@ -2,7 +2,7 @@ package com.delivery.habsida.dto;
 
 import com.delivery.habsida.entity.ModifierGroup;
 
-public record ModifierGroupDto(
+public record ModifierGroupResponse(
 
         Long id,
         Long storeId,
@@ -12,8 +12,8 @@ public record ModifierGroupDto(
         Integer maxSelect
 
 ) {
-    public static ModifierGroupDto from (ModifierGroup modifierGroup) {
-return new ModifierGroupDto(
+    public static ModifierGroupResponse from (ModifierGroup modifierGroup) {
+return new ModifierGroupResponse(
         modifierGroup.getId(),
         modifierGroup.getStore().getId(),
         modifierGroup.getName(),

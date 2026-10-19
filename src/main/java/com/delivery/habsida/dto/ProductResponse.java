@@ -5,7 +5,7 @@ import com.delivery.habsida.entity.ProductStatus;
 
 import java.math.BigDecimal;
 
-public record ProductDto(
+public record ProductResponse(
         Long id,
         String name,
         String description,
@@ -20,8 +20,8 @@ public record ProductDto(
         Long categoryId
 
         ) {
-    public static ProductDto from(Product product) {
-        return new ProductDto(
+    public static ProductResponse from(Product product) {
+        return new ProductResponse(
                 product.getId(),
                 product.getName(),
                 product.getDescription(),

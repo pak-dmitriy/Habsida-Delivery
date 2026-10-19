@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.StoreHourDto;
+import com.delivery.habsida.dto.StoreHourResponse;
 import com.delivery.habsida.dto.StoreHourRequest;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.StoreBreak;
@@ -51,44 +51,8 @@ public class StoreHourService {
         storeHour.setDayOff(request.dayOff());
     }
 
-    @Transactional
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public StoreHourDto createStoreHour(Long storeId, StoreHourRequest request) {
-        Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new StoreNotFoundException("Store not found"));
-
-        StoreHour storeHour = new StoreHour();
-        storeHour.setStore(store);
-
-        applyRequest(storeHour, request);
-
-        return StoreHourDto.from(storeHourRepository.save(storeHour));
-    }
-
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public List<StoreHourDto> getStoreHours(Long storeId) {
-        return storeHourRepository.findByStoreId(storeId)
-                .stream()
-                .map(StoreHourDto::from).toList();
-    }
-
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public StoreHourDto getStoreHour(Long storeId, Long hourId) {
-        StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
-        return StoreHourDto.from(storeHour);
-    }
-
-    @Transactional
-    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
-    public StoreHourDto updateStoreHour(Long storeId, Long hourId, StoreHourRequest request) {
-        StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
-        validateBreaksFitNewHours(hourId, request);
-        applyRequest(storeHour, request);
-        return StoreHourDto.from(storeHourRepository.save(storeHour));
-    }
-
     private void validateBreaksFitNewHours(Long hourId, StoreHourRequest request) {
-        List<StoreBreak> breaks = storeBreakRepository.findByStoreHourId(hourId);
+        List<StoreBreak> breaks = storeBreakRepository.findAllByStoreHourId(hourId);
         if (breaks.isEmpty()) {
             return;
         }
@@ -103,11 +67,50 @@ public class StoreHourService {
         }
     }
 
+    @Transactional
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    public StoreHourResponse createStoreHour(Long storeId, StoreHourRequest request) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new StoreNotFoundException("Store not found"));
+
+        StoreHour storeHour = new StoreHour();
+        storeHour.setStore(store);
+
+        applyRequest(storeHour, request);
+
+        return StoreHourResponse.from(storeHourRepository.save(storeHour));
+    }
+
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    public List<StoreHourResponse> getStoreHours(Long storeId) {
+        return storeHourRepository.findByStoreId(storeId)
+                .stream()
+                .map(StoreHourResponse::from).toList();
+    }
+
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    public StoreHourResponse getStoreHour(Long storeId, Long hourId) {
+        StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+
+        return StoreHourResponse.from(storeHour);
+    }
+
+    @Transactional
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    public StoreHourResponse updateStoreHour(Long storeId, Long hourId, StoreHourRequest request) {
+        StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+
+        validateBreaksFitNewHours(hourId, request);
+        applyRequest(storeHour, request);
+
+        return StoreHourResponse.from(storeHourRepository.save(storeHour));
+    }
 
     @Transactional
     @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
     public void deleteStoreHour(Long storeId, Long hourId) {
         StoreHour storeHour = getStoreHourOrThrow(storeId, hourId);
+
         storeHourRepository.delete(storeHour);
     }
 }

@@ -334,6 +334,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handlerPaymentNotFoundException(PaymentNotFoundException ex, HttpServletRequest request) {
@@ -450,6 +451,17 @@ public class GlobalExceptionHandler {
     public ErrorResponse handlerMinOrderPriceNotReachedException(MinOrderPriceNotReachedException ex, HttpServletRequest request) {
         return new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(InvalidQueryParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlerInvalidQueryParameterException(InvalidQueryParameterException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
                 List.of(ex.getMessage()),
                 LocalDateTime.now(),
                 request.getRequestURI()

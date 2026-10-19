@@ -4,13 +4,13 @@ import com.delivery.habsida.entity.OrderItemModifier;
 
 import java.math.BigDecimal;
 
-public record OrderItemModifierDto(
+public record OrderItemModifierResponse(
         Long id,
         String optionName,
         BigDecimal priceDelta
         ) {
-    public static OrderItemModifierDto from(OrderItemModifier orderItemModifier) {
-        return new OrderItemModifierDto(
+    public static OrderItemModifierResponse from(OrderItemModifier orderItemModifier) {
+        return new OrderItemModifierResponse(
                 orderItemModifier.getId(),
                 orderItemModifier.getOptionName(),
                 orderItemModifier.getPriceDelta()

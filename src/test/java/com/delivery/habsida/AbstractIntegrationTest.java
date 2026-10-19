@@ -60,6 +60,10 @@ public abstract class AbstractIntegrationTest {
     protected StoreDeliverySettingRepository storeDeliverySettingRepository;
     @Autowired
     protected StoreDeliveryAreaRepository storeDeliveryAreaRepository;
+    @Autowired
+    protected ModifierGroupRepository modifierGroupRepository;
+    @Autowired
+    protected ProductModifierGroupRepository productModifierGroupRepository;
 
     protected void createDeliverySetup(Store store) {
         StoreDeliverySetting setting = new StoreDeliverySetting();

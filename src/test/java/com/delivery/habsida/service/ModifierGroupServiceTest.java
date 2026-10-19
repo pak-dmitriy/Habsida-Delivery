@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierGroupDto;
 import com.delivery.habsida.dto.ModifierGroupRequest;
+import com.delivery.habsida.dto.ModifierGroupResponse;
 import com.delivery.habsida.entity.ModifierGroup;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.exception.InvalidQuantityException;
@@ -14,6 +14,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,8 +25,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ModifierGroupServiceTest {
@@ -35,45 +38,52 @@ public class ModifierGroupServiceTest {
     @InjectMocks
     private ModifierGroupService modifierGroupService;
 
+    private final Pageable pageable = PageRequest.of(0, 10);
+
     private ModifierGroup modifierGroup;
     private Store store;
 
     @BeforeEach
     void setUp() {
-        modifierGroup = new ModifierGroup();
         store = new Store();
-
         store.setId(1L);
 
-        modifierGroup.setId(1L);
+        modifierGroup = new ModifierGroup();
+        modifierGroup.setId(5L);
+        modifierGroup.setStore(store);
         modifierGroup.setName("group");
         modifierGroup.setRequired(true);
         modifierGroup.setMinSelect(1);
         modifierGroup.setMaxSelect(5);
-        modifierGroup.setStore(store);
     }
 
-    @Test
-    void createModifierGroup_success() {
-        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
-        when(modifierGroupRepository.save(any())).thenReturn(modifierGroup);
-
-        ModifierGroupRequest request = new ModifierGroupRequest(
+    private ModifierGroupRequest defaultRequest() {
+        return new ModifierGroupRequest(
                 "group",
                 true,
                 1,
                 5
         );
+    }
 
-        ModifierGroupDto response = modifierGroupService.createModifierGroup(1L, request);
+    @Test
+    void createModifierGroup_success() {
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(modifierGroupRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ModifierGroupResponse response = modifierGroupService.createModifierGroup(1L, defaultRequest());
+
+        assertEquals(1L, response.storeId());
         assertEquals("group", response.name());
         assertTrue(response.required());
         assertEquals(1, response.minSelect());
         assertEquals(5, response.maxSelect());
+
+        verify(modifierGroupRepository).save(any());
     }
 
     @Test
-    void createModifierGroup_invalidQuantity_throwsException() {
+    void createModifierGroup_throwsException_whenQuantityIsInvalid() {
         ModifierGroupRequest request = new ModifierGroupRequest(
                 "group",
                 true,
@@ -82,98 +92,135 @@ public class ModifierGroupServiceTest {
         );
         assertThrows(InvalidQuantityException.class,
                 () -> modifierGroupService.createModifierGroup(1L, request));
+
+        verify(modifierGroupRepository, never()).save(any());
     }
 
     @Test
     void getModifierGroup_success() {
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
+        when(modifierGroupRepository.findByIdAndStoreId(5L, 1L)).thenReturn(Optional.of(modifierGroup));
 
-        ModifierGroupDto response = modifierGroupService.getModifierGroup(1L, 1L);
-        assertTrue(response.required());
-        assertEquals(1, response.minSelect());
-        assertEquals(5, response.maxSelect());
-    }
+        ModifierGroupResponse response = modifierGroupService.getModifierGroup(1L, 5L);
 
-    @Test
-    void getModifierGroup_notFound_throwsException() {
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.empty());
-
-        assertThrows(ModifierGroupNotFoundException.class,
-                () -> modifierGroupService.getModifierGroup(1L, 1L));
-    }
-
-    @Test
-    void getModifierGroups_success() {
-        when(modifierGroupRepository.findByStoreId(1L)).thenReturn(List.of(modifierGroup));
-
-        List<ModifierGroupDto> response = modifierGroupService.getModifierGroups(1L);
-        assertEquals(1, response.size());
-        assertEquals(1L, response.get(0).id());
-    }
-
-    @Test
-    void getModifierGroups_returnsEmptyList_whenNoGroups() {
-        when(modifierGroupRepository.findByStoreId(1L)).thenReturn(Collections.emptyList());
-
-        List<ModifierGroupDto> response = modifierGroupService.getModifierGroups(1L);
-        assertTrue(response.isEmpty());
-    }
-
-    @Test
-    void updateModifierGroup_success() {
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
-        when(modifierGroupRepository.save(any())).thenReturn(modifierGroup);
-
-        ModifierGroupRequest request = new ModifierGroupRequest(
-                "group",
-                true,
-                1,
-                5
-        );
-        ModifierGroupDto response = modifierGroupService.updateModifierGroup(1L, 1L, request);
+        assertEquals(5L, response.id());
+        assertEquals(1L, response.storeId());
         assertEquals("group", response.name());
         assertTrue(response.required());
         assertEquals(1, response.minSelect());
         assertEquals(5, response.maxSelect());
+
+        verify(modifierGroupRepository).findByIdAndStoreId(5L, 1L);
     }
 
     @Test
-    void updateModifierGroup_notFound_throwsException() {
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.empty());
+    void getModifierGroup_throwsException_whenGroupNotFound() {
+        when(modifierGroupRepository.findByIdAndStoreId(5L, 1L)).thenReturn(Optional.empty());
 
-        ModifierGroupRequest request = new ModifierGroupRequest(
+        assertThrows(ModifierGroupNotFoundException.class,
+                () -> modifierGroupService.getModifierGroup(1L, 5L));
+
+        verify(modifierGroupRepository).findByIdAndStoreId(5L, 1L);
+    }
+
+    @Test
+    void getModifierGroups_success() {
+        when(modifierGroupRepository.findByStoreId(1L, pageable)).thenReturn(new PageImpl<>(List.of(modifierGroup)));
+
+        Page<ModifierGroupResponse> page = modifierGroupService.getModifierGroups(1L, pageable);
+        ModifierGroupResponse response = page.getContent().get(0);
+
+        assertEquals(1, page.getContent().size());
+        assertEquals(5L, response.id());
+        assertEquals(1L, response.storeId());
+        assertEquals("group", response.name());
+        assertTrue(response.required());
+        assertEquals(1, response.minSelect());
+        assertEquals(5, response.maxSelect());
+
+        verify(modifierGroupRepository).findByStoreId(1L, pageable);
+    }
+
+    @Test
+    void getModifierGroups_returnsEmptyList_whenNoGroups() {
+        when(modifierGroupRepository.findByStoreId(1L, pageable)).thenReturn(Page.empty());
+
+        Page<ModifierGroupResponse> page = modifierGroupService.getModifierGroups(1L, pageable);
+
+        assertTrue(page.isEmpty());
+    }
+
+    @Test
+    void updateModifierGroup_success() {
+        ModifierGroupRequest updateRequest = new ModifierGroupRequest(
+                "group1",
+                false,
+                2,
+                6
+        );
+
+        when(modifierGroupRepository.findByIdAndStoreId(5L, 1L)).thenReturn(Optional.of(modifierGroup));
+        when(modifierGroupRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ModifierGroupResponse response = modifierGroupService.updateModifierGroup(1L, 5L, updateRequest);
+
+        assertEquals(5L, response.id());
+        assertEquals(1L, response.storeId());
+        assertEquals("group1", response.name());
+        assertFalse(response.required());
+        assertEquals(2, response.minSelect());
+        assertEquals(6, response.maxSelect());
+
+        verify(modifierGroupRepository).save(modifierGroup);
+    }
+
+    @Test
+    void updateModifierGroup_throwsException_GroupNotFound_() {
+        ModifierGroupRequest updateRequest = new ModifierGroupRequest(
                 "group",
                 true,
                 1,
                 5
         );
+
+        when(modifierGroupRepository.findByIdAndStoreId(5L, 1L)).thenReturn(Optional.empty());
+
+
         assertThrows(ModifierGroupNotFoundException.class,
-                ()->modifierGroupService.updateModifierGroup(1L, 1L, request));
+                () -> modifierGroupService.updateModifierGroup(1L, 5L, updateRequest));
+
+        verify(modifierGroupRepository, never()).save(any());
     }
 
     @Test
-    void updateModifierGroup_InvalidQuantity_throwsException() {
-        ModifierGroupRequest request = new ModifierGroupRequest(
+    void updateModifierGroup_throwsException_whenQuantityIsInvalid() {
+        ModifierGroupRequest updateRequest = new ModifierGroupRequest(
                 "group",
                 true,
                 5,
                 1
         );
         assertThrows(InvalidQuantityException.class,
-                ()-> modifierGroupService.updateModifierGroup(1L, 1L, request));
+                () -> modifierGroupService.updateModifierGroup(1L, 5L, updateRequest));
+
+        verify(modifierGroupRepository, never()).save(any());
     }
 
     @Test
     void deleteModifierGroup_success() {
-       when( modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
-       modifierGroupService.deleteModifierGroup(1L, 1L);
-       verify(modifierGroupRepository).delete(modifierGroup);
+        when(modifierGroupRepository.findByIdAndStoreId(5L, 1L)).thenReturn(Optional.of(modifierGroup));
+
+        modifierGroupService.deleteModifierGroup(1L, 5L);
+
+        verify(modifierGroupRepository).delete(modifierGroup);
     }
 
     @Test
-    void deleteModifierGroup_notFound_throwsException() {
-        when( modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.empty());
+    void deleteModifierGroup_throwsException_whenGroupNotFound() {
+        when(modifierGroupRepository.findByIdAndStoreId(5L, 1L)).thenReturn(Optional.empty());
+
         assertThrows(ModifierGroupNotFoundException.class,
-                ()-> modifierGroupService.deleteModifierGroup(1L, 1L));
+                () -> modifierGroupService.deleteModifierGroup(1L, 5L));
+
+        verify(modifierGroupRepository, never()).delete(any());
     }
 }

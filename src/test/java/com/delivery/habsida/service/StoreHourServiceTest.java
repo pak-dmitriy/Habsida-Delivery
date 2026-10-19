@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.StoreHourDto;
+import com.delivery.habsida.dto.StoreHourResponse;
 import com.delivery.habsida.dto.StoreHourRequest;
 import com.delivery.habsida.entity.Store;
 import com.delivery.habsida.entity.StoreBreak;
@@ -75,7 +75,7 @@ public class StoreHourServiceTest {
                 LocalTime.of(19, 30)
         );
 
-        StoreHourDto response = storeHourService.createStoreHour(1L, request);
+        StoreHourResponse response = storeHourService.createStoreHour(1L, request);
         assertEquals(1L, response.storeId());
         assertEquals(DayOfWeek.TUESDAY, response.dayOfWeek());
         assertEquals(LocalTime.of(10, 0), response.openTime());
@@ -97,7 +97,7 @@ public class StoreHourServiceTest {
                 LocalTime.of(19, 30)
         );
 
-        StoreHourDto response = storeHourService.createStoreHour(1L, request);
+        StoreHourResponse response = storeHourService.createStoreHour(1L, request);
         assertTrue(response.dayOff());
         assertNull(response.openTime());
         assertNull(response.closeTime());
@@ -125,7 +125,7 @@ public class StoreHourServiceTest {
     void getStoreHours_success() {
         when(storeHourRepository.findByStoreId(1L)).thenReturn(List.of(storeHour));
 
-        List<StoreHourDto> response = storeHourService.getStoreHours(1L);
+        List<StoreHourResponse> response = storeHourService.getStoreHours(1L);
         assertEquals(1, response.size());
         assertEquals(1L, response.get(0).id());
     }
@@ -134,7 +134,7 @@ public class StoreHourServiceTest {
     void getStoreHours_returnsEmptyList_whenNoHours() {
         when(storeHourRepository.findByStoreId(1L)).thenReturn(Collections.emptyList());
 
-        List<StoreHourDto> response = storeHourService.getStoreHours(1L);
+        List<StoreHourResponse> response = storeHourService.getStoreHours(1L);
         assertTrue(response.isEmpty());
     }
 
@@ -142,7 +142,7 @@ public class StoreHourServiceTest {
     void getStoreHour_success() {
         when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
 
-        StoreHourDto response = storeHourService.getStoreHour(1L, 1L);
+        StoreHourResponse response = storeHourService.getStoreHour(1L, 1L);
         assertEquals(1L, response.id());
         assertEquals(DayOfWeek.MONDAY, response.dayOfWeek());
     }
@@ -168,7 +168,7 @@ public class StoreHourServiceTest {
                 LocalTime.of(22, 30)
         );
 
-        StoreHourDto response = storeHourService.updateStoreHour(1L, 1L, request);
+        StoreHourResponse response = storeHourService.updateStoreHour(1L, 1L, request);
         assertEquals(DayOfWeek.FRIDAY, response.dayOfWeek());
         assertEquals(LocalTime.of(11, 0), response.openTime());
         assertEquals(LocalTime.of(23, 0), response.closeTime());
@@ -182,7 +182,7 @@ public class StoreHourServiceTest {
         storeBreak.setEndTime(LocalTime.of(14, 0));
 
         when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeBreakRepository.findAllByStoreHourId(1L)).thenReturn(List.of(storeBreak));
 
         StoreHourRequest request = new StoreHourRequest(
                 DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), false, null);
@@ -199,7 +199,7 @@ public class StoreHourServiceTest {
         storeBreak.setEndTime(LocalTime.of(14, 0));
 
         when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeBreakRepository.findAllByStoreHourId(1L)).thenReturn(List.of(storeBreak));
 
         StoreHourRequest request = new StoreHourRequest(
                 DayOfWeek.MONDAY, null, null, true, null);
@@ -216,7 +216,7 @@ public class StoreHourServiceTest {
         storeBreak.setEndTime(LocalTime.of(14, 0));
 
         when(storeHourRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(storeHour));
-        when(storeBreakRepository.findByStoreHourId(1L)).thenReturn(List.of(storeBreak));
+        when(storeBreakRepository.findAllByStoreHourId(1L)).thenReturn(List.of(storeBreak));
         when(storeHourRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         StoreHourRequest request = new StoreHourRequest(
@@ -238,7 +238,7 @@ public class StoreHourServiceTest {
                 null
         );
 
-        StoreHourDto response = storeHourService.updateStoreHour(1L, 1L, request);
+        StoreHourResponse response = storeHourService.updateStoreHour(1L, 1L, request);
         assertTrue(response.dayOff());
         assertNull(response.openTime());
         assertNull(response.closeTime());

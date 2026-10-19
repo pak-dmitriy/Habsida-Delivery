@@ -1,7 +1,7 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.OrderCreateRequest;
-import com.delivery.habsida.dto.OrderDTO;
+import com.delivery.habsida.dto.OrderResponse;
 import com.delivery.habsida.dto.OrderItemRequest;
 import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.*;
@@ -12,6 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.math.BigDecimal;
@@ -56,6 +60,8 @@ class OrderServiceTest {
     @Mock
     private StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository;
 
+    private final Pageable pageable = PageRequest.of(0, 10);
+
     @InjectMocks
     private OrderService orderService;
 
@@ -63,7 +69,6 @@ class OrderServiceTest {
     private Customer customer;
     private CustomerAddress customerAddress;
     private Product product;
-    private Order order;
     private ModifierOption modifierOption;
     private OrderItemModifier orderItemModifier;
     private ModifierGroup modifierGroup;
@@ -78,22 +83,15 @@ class OrderServiceTest {
         store.setId(1L);
 
         customer = new Customer();
-        customer.setId(1L);
+        customer.setId(2L);
 
         customerAddress = new CustomerAddress();
-        customerAddress.setId(1L);
+        customerAddress.setId(3L);
         customerAddress.setCity("City");
         customerAddress.setCustomer(customer);
 
-        order = new Order();
-        order.setId(1L);
-        order.setStore(store);
-        order.setOrderStatus(OrderStatus.CREATED);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
-
         orderItemModifier = new OrderItemModifier();
-        orderItemModifier.setId(1L);
+        orderItemModifier.setId(5L);
         orderItemModifier.setOptionName("Double size");
         orderItemModifier.setPriceDelta(new BigDecimal("10.2"));
 
@@ -104,6 +102,19 @@ class OrderServiceTest {
         modifierGroup = defaultModifierGroup();
         modifierOption = defaultOption(modifierGroup);
         productModifierGroup = attachGroupToProduct(product, modifierGroup);
+    }
+
+    private Order defaultOrder() {
+        Order order = new Order();
+        order.setId(6L);
+        order.setOrderNumber("1");
+        order.setOrderStatus(OrderStatus.CREATED);
+        order.setTotal(new BigDecimal("10.2"));
+        order.setStore(store);
+        order.setCustomer(customer);
+        order.setCustomerAddress(customerAddress);
+
+        return order;
     }
 
     private OrderCreateRequest defaultRequest() {
@@ -192,12 +203,12 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("50.40"), result.total());
         assertEquals(1, result.orderItems().size());
@@ -279,7 +290,7 @@ class OrderServiceTest {
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
 
         assertThrows(MinOrderPriceNotReachedException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -301,12 +312,12 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("40.40"), result.total());
         assertEquals(1, result.orderItems().size());
@@ -334,10 +345,10 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeRepository.incrementAndGetOrderNumber(1L)).thenReturn(List.of(1L));
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
 
-        OrderDTO result = orderService.createOrder(1L, updateDeliveryType);
+        OrderResponse result = orderService.createOrder(1L, updateDeliveryType);
 
         assertEquals(new BigDecimal("40.40"), result.total());
         assertEquals(1, result.orderItems().size());
@@ -382,7 +393,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(1, result.orderItems().get(0).orderItemModifiers().size());
         assertEquals("Double size", result.orderItems().get(0).orderItemModifiers().get(0).optionName());
@@ -463,7 +474,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, defaultRequest());
+        OrderResponse result = orderService.createOrder(1L, defaultRequest());
 
         assertEquals("6", result.orderNumber());
     }
@@ -471,7 +482,7 @@ class OrderServiceTest {
     @Test
     void createOrder_shouldThrowException_whenAddressBelongsToDifferentCustomer() {
         Customer anotherCustomer = new Customer();
-        anotherCustomer.setId(2L);
+        anotherCustomer.setId(9L);
         customerAddress.setCustomer(anotherCustomer);
 
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
@@ -544,27 +555,32 @@ class OrderServiceTest {
 
     @Test
     void acceptOrder_shouldSucceed_whenTransitionIsValid() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        Order order = defaultOrder();
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
-        OrderDTO result = orderService.acceptOrder(1L, order.getId());
+
+        OrderResponse result = orderService.acceptOrder(1L, order.getId());
         assertEquals(OrderStatus.ACCEPTED, result.orderStatus());
     }
 
     @Test
     void acceptOrder_shouldThrowException_whenOrderNotFound() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(orderRepository.findById(6L)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class,
-                () -> orderService.acceptOrder(1L, 1L));
+                () -> orderService.acceptOrder(1L, 6L));
     }
 
     @Test
     void acceptOrder_shouldThrowException_whenOrderBelongsToDifferentStore() {
+        Order order = defaultOrder();
+
         Store anotherStore = new Store();
         anotherStore.setId(2L);
         order.setStore(anotherStore);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(OrderNotFoundException.class,
                 () -> orderService.acceptOrder(1L, order.getId()));
@@ -572,9 +588,11 @@ class OrderServiceTest {
 
     @Test
     void acceptOrder_shouldThrowException_whenTransitionIsInvalid() {
+        Order order = defaultOrder();
+
         order.setOrderStatus(OrderStatus.COMPLETED);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.acceptOrder(1L, order.getId()));
@@ -582,22 +600,23 @@ class OrderServiceTest {
 
     @Test
     void rejectOrder_shouldSucceed_whenTransitionIsValid() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.rejectOrder(1L, order.getId(), "Out of stock");
+        OrderResponse result = orderService.rejectOrder(1L, order.getId(), "Out of stock");
 
         assertEquals(OrderStatus.REJECTED, result.orderStatus());
     }
 
     @Test
     void rejectOrder_shouldThrowException_whenTransitionIsInvalid() {
+        Order order = defaultOrder();
+
         order.setOrderStatus(OrderStatus.COMPLETED);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.rejectOrder(1L, order.getId(), "Out of stock"));
@@ -605,22 +624,23 @@ class OrderServiceTest {
 
     @Test
     void cancelOrder_shouldSucceed_whenTransitionIsValid() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.cancelOrder(1L, order.getId());
+        OrderResponse result = orderService.cancelOrder(1L, order.getId());
 
         assertEquals(OrderStatus.CANCELLED, result.orderStatus());
     }
 
     @Test
     void cancelOrder_shouldThrowException_whenTransitionIsInvalid() {
+        Order order = defaultOrder();
+
         order.setOrderStatus(OrderStatus.COMPLETED);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.cancelOrder(1L, order.getId()));
@@ -628,21 +648,22 @@ class OrderServiceTest {
 
     @Test
     void startOrder_shouldSucceed_whenTransitionIsValid() {
+        Order order = defaultOrder();
         order.setOrderStatus(OrderStatus.ACCEPTED);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.startOrder(1L, order.getId());
+        OrderResponse result = orderService.startOrder(1L, order.getId());
 
         assertEquals(OrderStatus.IN_PROGRESS, result.orderStatus());
     }
 
     @Test
     void startOrder_shouldThrowException_whenTransitionIsInvalid() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        Order order = defaultOrder();
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.startOrder(1L, order.getId()));
@@ -650,21 +671,22 @@ class OrderServiceTest {
 
     @Test
     void completeOrder_shouldSucceed_whenTransitionIsValid() {
+        Order order = defaultOrder();
         order.setOrderStatus(OrderStatus.IN_PROGRESS);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.completeOrder(1L, order.getId());
+        OrderResponse result = orderService.completeOrder(1L, order.getId());
 
         assertEquals(OrderStatus.COMPLETED, result.orderStatus());
     }
 
     @Test
     void completeOrder_shouldThrowException_whenTransitionIsInvalid() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        Order order = defaultOrder();
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.completeOrder(1L, order.getId()));
@@ -672,40 +694,44 @@ class OrderServiceTest {
 
     @Test
     void getNewOrders_shouldReturnOrderList() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findByStoreIdAndOrderStatus(1L, OrderStatus.CREATED))
-                .thenReturn(List.of(order));
+        when(orderRepository.findByStoreIdAndOrderStatus(1L, OrderStatus.CREATED, pageable))
+                .thenReturn(new PageImpl<>(List.of(order)));
         when(orderItemRepository.findByOrderIdIn(List.of(order.getId())))
                 .thenReturn(List.of());
 
-        List<OrderDTO> result = orderService.getNewOrders(1L);
+        Page<OrderResponse> page = orderService.getNewOrders(1L, pageable);
+        OrderResponse response = page.getContent().get(0);
 
-        assertEquals(1, result.size());
-        assertEquals(OrderStatus.CREATED, result.get(0).orderStatus());
+        assertEquals(1, page.getContent().size());
+        assertEquals(6L, response.id());
+        assertEquals("1", response.orderNumber());
+        assertEquals(OrderStatus.CREATED, response.orderStatus());
+        assertEquals(new BigDecimal("10.2"), response.total());
+        assertEquals(1L, response.storeId());
+        assertEquals(2L, response.customerId());
+        assertEquals(3L, response.customerAddressId());
     }
 
     @Test
     void cancelOrder_shouldSucceed_whenOrderIsAccepted() {
+        Order order = defaultOrder();
         order.setOrderStatus(OrderStatus.ACCEPTED);
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
 
-        OrderDTO result = orderService.cancelOrder(1L, order.getId());
+        OrderResponse result = orderService.cancelOrder(1L, order.getId());
 
         assertEquals(OrderStatus.CANCELLED, result.orderStatus());
     }
 
     @Test
     void acceptOrder_shouldPropagateException_whenVersionConflictOccurs() {
-        order.setCustomer(customer);
-        order.setCustomerAddress(customerAddress);
+        Order order = defaultOrder();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order))
                 .thenThrow(new ObjectOptimisticLockingFailureException(Order.class, order.getId()));
 
@@ -731,7 +757,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("4.00"), result.discountTotal());
         assertEquals(new BigDecimal("46.40"), result.total());
@@ -754,7 +780,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO result = orderService.createOrder(1L, request);
+        OrderResponse result = orderService.createOrder(1L, request);
 
         assertEquals(new BigDecimal("0.00"), result.discountTotal());
         assertEquals(new BigDecimal("50.40"), result.total());
@@ -777,7 +803,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
-        OrderDTO result = orderService.createOrder(1L, defaultRequest());
+        OrderResponse result = orderService.createOrder(1L, defaultRequest());
 
         assertEquals(new BigDecimal("6.60"), result.discountTotal());
     }
@@ -811,7 +837,7 @@ class OrderServiceTest {
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
 
-        OrderDTO oneLineResult = orderService.createOrder(1L, oneLinesRequest);
+        OrderResponse oneLineResult = orderService.createOrder(1L, oneLinesRequest);
 
         when(productRepository.decreaseStockAndGet(1L, 1)).thenReturn(List.of(99));
 
@@ -826,7 +852,7 @@ class OrderServiceTest {
                         new OrderItemRequest(1L, 1, List.of())
                 )
         );
-        OrderDTO twoLinesResult = orderService.createOrder(1L, twoLinesRequest);
+        OrderResponse twoLinesResult = orderService.createOrder(1L, twoLinesRequest);
 
         assertEquals(new BigDecimal("0.02"), oneLineResult.discountTotal());
         assertEquals(oneLineResult.discountTotal(), twoLinesResult.discountTotal());

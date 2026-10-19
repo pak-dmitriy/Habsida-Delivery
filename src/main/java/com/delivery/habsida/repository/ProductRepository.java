@@ -2,6 +2,8 @@ package com.delivery.habsida.repository;
 
 import com.delivery.habsida.entity.Product;
 import com.delivery.habsida.entity.ProductStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,13 +19,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     nativeQuery = true)
     List<Integer> decreaseStockAndGet(@Param("productId") Long productId, @Param("quantity") Integer quantity);
 
-    List<Product> findByStoreId(Long storeId);
+    Page<Product> findByStoreId(Long storeId, Pageable pageable);
 
-    List<Product> findByStoreIdAndCategoryId(Long storeId, Long categoryId);
+    Page<Product> findByStoreIdAndCategoryId(Long storeId, Long categoryId, Pageable pageable);
 
-    List<Product> findByStoreIdAndStatus(Long storeId, ProductStatus status);
+    Page<Product> findByStoreIdAndStatus(Long storeId, ProductStatus status, Pageable pageable);
 
-    List<Product> findByStoreIdAndCategoryIdAndStatus(Long storeId, Long categoryId, ProductStatus status);
+    Page<Product> findByStoreIdAndCategoryIdAndStatus(Long storeId, Long categoryId, ProductStatus status, Pageable pageable);
 
     Optional<Product> findByIdAndStoreId(Long productId, Long storeId);
 }

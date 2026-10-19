@@ -5,7 +5,7 @@ import com.delivery.habsida.entity.StoreHour;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
-public record StoreHourDto (
+public record StoreHourResponse(
      Long id,
      Long storeId,
      DayOfWeek dayOfWeek,
@@ -15,8 +15,8 @@ public record StoreHourDto (
      LocalTime lastOrderCutoffTime
 ){
 
-    public static StoreHourDto from(StoreHour storeHour) {
-        return new StoreHourDto(
+    public static StoreHourResponse from(StoreHour storeHour) {
+        return new StoreHourResponse(
                 storeHour.getId(),
                 storeHour.getStore().getId(),
                 storeHour.getDayOfWeek(),

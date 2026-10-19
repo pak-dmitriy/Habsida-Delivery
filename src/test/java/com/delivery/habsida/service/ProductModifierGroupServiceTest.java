@@ -1,10 +1,16 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.ModifierGroupWithOptionsDto;
-import com.delivery.habsida.dto.ProductModifierGroupDto;
-import com.delivery.habsida.entity.*;
+import com.delivery.habsida.dto.ModifierGroupWithOptionsResponse;
+import com.delivery.habsida.dto.ModifierOptionResponse;
+import com.delivery.habsida.dto.ProductModifierGroupResponse;
+import com.delivery.habsida.entity.ModifierGroup;
+import com.delivery.habsida.entity.ModifierOption;
+import com.delivery.habsida.entity.Product;
+import com.delivery.habsida.entity.ProductModifierGroup;
 import com.delivery.habsida.exception.ModifierGroupNotFoundException;
 import com.delivery.habsida.exception.ProductModifierGroupAlreadyExistsException;
+import com.delivery.habsida.exception.ProductModifierGroupNotFoundException;
+import com.delivery.habsida.exception.ProductNotFoundException;
 import com.delivery.habsida.repository.ModifierGroupRepository;
 import com.delivery.habsida.repository.ProductModifierGroupRepository;
 import com.delivery.habsida.repository.ProductRepository;
@@ -14,16 +20,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductModifierGroupServiceTest {
@@ -39,84 +47,137 @@ public class ProductModifierGroupServiceTest {
     @InjectMocks
     private ProductModifierGroupService productModifierGroupService;
 
-    private ProductModifierGroup productModifierGroup;
     private ModifierGroup modifierGroup;
     private Product product;
-    private Store store;
     private ModifierOption modifierOption;
 
     @BeforeEach
     void setUp() {
-        store = new Store();
-        store.setId(1L);
+        product = new Product();
+        product.setId(2L);
 
         modifierGroup = new ModifierGroup();
-        modifierGroup.setId(1L);
-        modifierGroup.setStore(store);
+        modifierGroup.setId(3L);
+        modifierGroup.setName("group");
+        modifierGroup.setRequired(true);
+        modifierGroup.setMinSelect(1);
+        modifierGroup.setMaxSelect(5);
 
         modifierOption = new ModifierOption();
-        modifierOption.setName("Name");
+        modifierOption.setId(4L);
+        modifierOption.setName("option");
         modifierOption.setPriceDelta(new BigDecimal("10.2"));
-
         modifierOption.setModifierGroup(modifierGroup);
+
         modifierGroup.setModifierOptions(List.of(modifierOption));
+    }
 
-        product = new Product();
-        product.setId(1L);
-        product.setStore(store);
-
-        productModifierGroup = new ProductModifierGroup();
-        productModifierGroup.setId(1L);
+    private ProductModifierGroup defaultLink() {
+        ProductModifierGroup productModifierGroup = new ProductModifierGroup();
+        productModifierGroup.setId(5L);
         productModifierGroup.setProduct(product);
         productModifierGroup.setModifierGroup(modifierGroup);
+
+        return productModifierGroup;
     }
 
     @Test
     void createProductModifierGroup_success() {
-        when(productRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(product));
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
-        when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(false);
-        when(productModifierGroupRepository.save(any())).thenReturn(productModifierGroup);
+        when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(product));
+        when(modifierGroupRepository.findByIdAndStoreId(3L, 1L)).thenReturn(Optional.of(modifierGroup));
+        when(productModifierGroupRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProductModifierGroupDto dto = productModifierGroupService.createProductModifierGroup(1L, 1L, 1L);
-        assertEquals(1L, dto.id());
+        ProductModifierGroupResponse response = productModifierGroupService.createProductModifierGroup(1L, 2L, 3L);
+
+        assertEquals(2L, response.productId());
+        assertEquals(3L, response.modifierGroupId());
+
+        verify(productModifierGroupRepository).save(any());
     }
 
     @Test
-    void createProductModifierGroup_duplicateFound_throwsException() {
-        when(productRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(product));
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
-        when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
+    void createProductModifierGroup_throwsException_whenAlreadyExists() {
+        when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(product));
+        when(modifierGroupRepository.findByIdAndStoreId(3L, 1L)).thenReturn(Optional.of(modifierGroup));
+        when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(2L, 3L)).thenReturn(true);
 
         assertThrows(ProductModifierGroupAlreadyExistsException.class,
-                () -> productModifierGroupService.createProductModifierGroup(1L, 1L, 1L));
+                () -> productModifierGroupService.createProductModifierGroup(1L, 2L, 3L));
+
+        verify(productModifierGroupRepository, never()).save(any());
     }
 
     @Test
     void getModifierGroupWithOptions_success() {
-        when(productRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(product));
-        when(productModifierGroupRepository.findByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        Pageable pageable = PageRequest.of(0, 10);
 
-        List<ModifierGroupWithOptionsDto> response = productModifierGroupService.getModifierGroupWithOptions(1L, 1L);
-        assertEquals(1, response.size());
+        when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(product));
+        when(modifierGroupRepository.findModifierGroupsByProductId(2L, pageable)).thenReturn(new PageImpl<>(List.of(modifierGroup)));
+
+        Page<ModifierGroupWithOptionsResponse> page = productModifierGroupService.getModifierGroupWithOptions(1L, 2L, pageable);
+
+        ModifierGroupWithOptionsResponse response = page.getContent().get(0);
+        assertEquals(1, page.getContent().size());
+        assertEquals(3L, response.id());
+        assertEquals("group", response.name());
+        assertTrue(response.required());
+        assertEquals(1, response.minSelect());
+        assertEquals(5, response.maxSelect());
+
+        ModifierOptionResponse option = response.options().get(0);
+        assertEquals(4L, option.id());
+        assertEquals(3L, option.modifierGroupId());
+        assertEquals("option", option.name());
+        assertEquals(new BigDecimal("10.2"), option.priceDelta());
+        assertFalse(option.isFree());
+
+        verify(modifierGroupRepository).findModifierGroupsByProductId(2L, pageable);
+    }
+
+    @Test
+    void getModifierGroupWithOptions_throwsException_whenProductNotFound() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class,
+                () -> productModifierGroupService.getModifierGroupWithOptions(1L, 2L, pageable));
+
+        verify(productModifierGroupRepository, never()).findByProductId(anyLong(), any(Pageable.class));
     }
 
     @Test
     void deleteProductModifierGroup_success() {
-        when(productRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(product));
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(modifierGroup));
-        when(productModifierGroupRepository.findByProductIdAndModifierGroupId(1L, 1L)).thenReturn(Optional.of(productModifierGroup));
+        ProductModifierGroup deleteLink = defaultLink();
 
-        productModifierGroupService.deleteProductModifierGroup(1L, 1L, 1L);
-        verify(productModifierGroupRepository).delete(productModifierGroup);
+        when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(product));
+        when(modifierGroupRepository.findByIdAndStoreId(3L, 1L)).thenReturn(Optional.of(modifierGroup));
+        when(productModifierGroupRepository.findByProductIdAndModifierGroupId(2L, 3L)).thenReturn(Optional.of(deleteLink));
+
+        productModifierGroupService.deleteProductModifierGroup(1L, 2L, 3L);
+        verify(productModifierGroupRepository).delete(deleteLink);
     }
 
     @Test
-    void deleteProductModifierGroup_groupNotFound_throwsException() {
-        when(productRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.of(product));
-        when(modifierGroupRepository.findByIdAndStoreId(1L, 1L)).thenReturn(Optional.empty());
+    void deleteProductModifierGroup_throwsException_whenGroupNotFound() {
+        when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(product));
+        when(modifierGroupRepository.findByIdAndStoreId(3L, 1L)).thenReturn(Optional.empty());
 
         assertThrows(ModifierGroupNotFoundException.class,
-                () -> productModifierGroupService.deleteProductModifierGroup(1L, 1L, 1L));
+                () -> productModifierGroupService.deleteProductModifierGroup(1L, 2L, 3L));
+
+        verify(productModifierGroupRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteProductModifierGroup_throwsException_whenLinkNotFound() {
+        when(productRepository.findByIdAndStoreId(2L, 1L)).thenReturn(Optional.of(product));
+        when(modifierGroupRepository.findByIdAndStoreId(3L, 1L)).thenReturn(Optional.of(modifierGroup));
+        when(productModifierGroupRepository.findByProductIdAndModifierGroupId(2L, 3L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductModifierGroupNotFoundException.class,
+                () -> productModifierGroupService.deleteProductModifierGroup(1L, 2L, 3L));
+
+        verify(productModifierGroupRepository, never()).delete(any());
     }
 }

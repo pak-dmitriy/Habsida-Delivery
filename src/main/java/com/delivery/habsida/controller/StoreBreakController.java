@@ -1,14 +1,14 @@
 package com.delivery.habsida.controller;
 
-import com.delivery.habsida.dto.StoreBreakDto;
+import com.delivery.habsida.dto.StoreBreakResponse;
 import com.delivery.habsida.dto.StoreBreakRequest;
 import com.delivery.habsida.service.StoreBreakService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/stores/{storeId}/hours/{hourId}/breaks")
@@ -20,33 +20,33 @@ public class StoreBreakController {
     }
 
     @PostMapping
-    public ResponseEntity<StoreBreakDto> createStoreBreak(@PathVariable Long storeId,
-                                                          @PathVariable Long hourId,
-                                                          @Valid @RequestBody StoreBreakRequest storeBreakRequest) {
-        StoreBreakDto created = storeBreakService.createStoreBreak(storeId, hourId, storeBreakRequest);
+    public ResponseEntity<StoreBreakResponse> createStoreBreak(@PathVariable Long storeId,
+                                                               @PathVariable Long hourId,
+                                                               @Valid @RequestBody StoreBreakRequest storeBreakRequest) {
+        StoreBreakResponse created = storeBreakService.createStoreBreak(storeId, hourId, storeBreakRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
-    public List<StoreBreakDto> getStoreBreaks(@PathVariable Long storeId,
-                                              @PathVariable Long hourId) {
-        return storeBreakService.getStoreBreaks(storeId, hourId);
+    public Page<StoreBreakResponse> getStoreBreaks(@PathVariable Long storeId,
+                                                   @PathVariable Long hourId, Pageable pageable) {
+        return storeBreakService.getStoreBreaks(storeId, hourId, pageable);
     }
 
     @GetMapping("/{breakId}")
-    public StoreBreakDto getStoreBreak(@PathVariable Long storeId,
-                                       @PathVariable Long hourId,
-                                       @PathVariable Long breakId) {
+    public StoreBreakResponse getStoreBreak(@PathVariable Long storeId,
+                                            @PathVariable Long hourId,
+                                            @PathVariable Long breakId) {
         return storeBreakService.getStoreBreak(storeId, hourId, breakId);
     }
 
     @PutMapping("/{breakId}")
-    public ResponseEntity<StoreBreakDto> updateStoreBreak(@PathVariable Long storeId,
-                                                          @PathVariable Long hourId,
-                                                          @PathVariable Long breakId,
-                                                          @RequestBody @Valid StoreBreakRequest request) {
-        StoreBreakDto updated = storeBreakService.updateStoreBreak(storeId, hourId, breakId, request);
+    public ResponseEntity<StoreBreakResponse> updateStoreBreak(@PathVariable Long storeId,
+                                                               @PathVariable Long hourId,
+                                                               @PathVariable Long breakId,
+                                                               @RequestBody @Valid StoreBreakRequest request) {
+        StoreBreakResponse updated = storeBreakService.updateStoreBreak(storeId, hourId, breakId, request);
         return ResponseEntity.ok(updated);
     }
 

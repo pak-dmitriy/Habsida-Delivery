@@ -1,6 +1,6 @@
 package com.delivery.habsida.service;
 
-import com.delivery.habsida.dto.OrderPaymentDto;
+import com.delivery.habsida.dto.OrderPaymentResponse;
 import com.delivery.habsida.dto.OrderPaymentRequest;
 import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.OrderNotFoundException;
@@ -9,12 +9,10 @@ import com.delivery.habsida.exception.TransactionNotFoundException;
 import com.delivery.habsida.repository.OrderPaymentRepository;
 import com.delivery.habsida.repository.OrderRepository;
 import com.delivery.habsida.repository.TransactionRepository;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Service
 @Transactional(readOnly = true)
@@ -46,15 +44,15 @@ public class OrderPaymentService {
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found"));
     }
 
-    public OrderPaymentDto getOrderPayment(Long storeId, Long orderId) {
+    public OrderPaymentResponse getOrderPayment(Long storeId, Long orderId) {
         getOrderOrThrow(storeId, orderId);
         OrderPayment orderPayment = getPaymentOrThrow(orderId);
 
-        return OrderPaymentDto.from(orderPayment);
+        return OrderPaymentResponse.from(orderPayment);
     }
 
     @Transactional
-    public OrderPaymentDto updateOrderPayment(Long storeId, Long orderId, OrderPaymentRequest request) {
+    public OrderPaymentResponse updateOrderPayment(Long storeId, Long orderId, OrderPaymentRequest request) {
         getOrderOrThrow(storeId, orderId);
 
         OrderPayment orderPayment = getPaymentOrThrow(orderId);
@@ -83,6 +81,6 @@ public class OrderPaymentService {
 
             orderPayment.setTransaction(transResult);
         }
-        return OrderPaymentDto.from(orderPayment);
+        return OrderPaymentResponse.from(orderPayment);
     }
 }

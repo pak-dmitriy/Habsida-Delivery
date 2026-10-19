@@ -6,13 +6,16 @@ import com.delivery.habsida.entity.ProductModifierGroup;
 import com.delivery.habsida.entity.Store;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 public class ModifierGroupIntegrationTest extends AbstractIntegrationTest {
     private ModifierGroup createModifierGroup(Store store, String name) {
         ModifierGroup modifierGroup = new ModifierGroup();
@@ -21,6 +24,7 @@ public class ModifierGroupIntegrationTest extends AbstractIntegrationTest {
         modifierGroup.setRequired(false);
         modifierGroup.setMinSelect(0);
         modifierGroup.setMaxSelect(3);
+        modifierGroup.setModifierOptions(new ArrayList<>());
 
         return modifierGroupRepository.save(modifierGroup);
     }
@@ -40,7 +44,7 @@ public class ModifierGroupIntegrationTest extends AbstractIntegrationTest {
 
         Store store1 = createStore("group-asc-store");
 
-        Product product = createProduct(store1, "Burger", "10.00");
+        Product product = createProduct(store1, "HamburgerArtyom", "10.00");
 
         ModifierGroup sizeGroup = createModifierGroup(store1, "Size");
         ModifierGroup sauceGroup = createModifierGroup(store1, "Sauce");

@@ -5,10 +5,13 @@ import com.delivery.habsida.entity.*;
 import com.delivery.habsida.repository.*;
 import com.delivery.habsida.service.EmployeeService;
 import com.delivery.habsida.service.OrderService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +19,12 @@ import java.util.List;
 
 @Component
 @Profile("dev")
+@ConditionalOnProperty(
+        prefix = "app.seed",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class DevDataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -31,6 +40,12 @@ public class DevDataSeeder implements CommandLineRunner {
     private final StoreDeliverySettingRepository storeDeliverySettingRepository;
     private final StoreDeliveryAreaRepository storeDeliveryAreaRepository;
     private final OrderService orderService;
+
+    @Value("${app.seed.admin-password}")
+    private String adminPassword;
+
+    @Value("${app.seed.merchant-password}")
+    private String merchantPassword;
 
     public DevDataSeeder(UserRepository userRepository, RoleRepository roleRepository,
                          UserRoleRepository userRoleRepository, PasswordEncoder passwordEncoder,
@@ -55,6 +70,7 @@ public class DevDataSeeder implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
 
         if (userRepository.findByEmail("admin@habsida.com").isPresent()) {
@@ -67,7 +83,7 @@ public class DevDataSeeder implements CommandLineRunner {
         admin.setFirstName("Admin");
         admin.setLastName("Habsida");
         admin.setPhone("01012345678");
-        admin.setPassword(passwordEncoder.encode("admin"));
+        admin.setPassword(passwordEncoder.encode(adminPassword));
         User savedUser = userRepository.save(admin);
         Role adminRole = roleRepository.findByName("ADMIN").orElseThrow();
 
@@ -95,7 +111,7 @@ public class DevDataSeeder implements CommandLineRunner {
         storeDeliveryAreaRepository.save(storeDeliveryArea);
 
         EmployeeCreateResponse employee = employeeService.createEmployee(
-                new EmployeeCreateRequest("merchant", "merchant@habsida.com", "merchant",
+                new EmployeeCreateRequest("merchant", "merchant@habsida.com", merchantPassword,
                         "Tony", "Stark", "01099998888", "MERCHANT"));
 
         employeeService.assignEmployeeToStore(employee.id(), burgerStore.getId());

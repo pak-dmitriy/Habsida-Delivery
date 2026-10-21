@@ -623,6 +623,24 @@ class OrderServiceTest {
     }
 
     @Test
+    void rejectOrder_shouldRestoreStock_forEachItem() {
+        Order order = defaultOrder();
+
+        OrderItem item = new OrderItem();
+        item.setId(7L);
+        item.setProduct(product);
+        item.setQuantity(3);
+        item.setOrder(order);
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(item));
+
+        orderService.rejectOrder(1L, order.getId(), "Out of stock");
+
+        verify(productRepository).increaseStock(product.getId(), 3);
+    }
+
+    @Test
     void cancelOrder_shouldSucceed_whenTransitionIsValid() {
         Order order = defaultOrder();
 
@@ -644,6 +662,56 @@ class OrderServiceTest {
 
         assertThrows(InvalidOrderStatusTransitionException.class,
                 () -> orderService.cancelOrder(1L, order.getId()));
+    }
+
+    @Test
+    void cancelOrder_shouldRestoreStock_forEachItem() {
+        Order order = defaultOrder();
+
+        OrderItem item = new OrderItem();
+        item.setId(7L);
+        item.setProduct(product);
+        item.setQuantity(3);
+        item.setOrder(order);
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(item));
+
+        orderService.cancelOrder(1L, order.getId());
+
+        verify(productRepository).increaseStock(product.getId(), 3);
+    }
+
+    @Test
+    void cancelOrder_shouldRefundPayment_whenOrderWasPaid() {
+        Order order = defaultOrder();
+
+        OrderPayment payment = new OrderPayment();
+        payment.setStatus(PaymentStatus.PAID);
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
+        when(orderPaymentRepository.findByOrderId(order.getId())).thenReturn(Optional.of(payment));
+
+        orderService.cancelOrder(1L, order.getId());
+
+        assertEquals(PaymentStatus.REFUNDED, payment.getStatus());
+    }
+
+    @Test
+    void cancelOrder_shouldNotChangePayment_whenOrderWasUnpaid() {
+        Order order = defaultOrder();
+
+        OrderPayment payment = new OrderPayment();
+        payment.setStatus(PaymentStatus.UNPAID);
+
+        when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of());
+        when(orderPaymentRepository.findByOrderId(order.getId())).thenReturn(Optional.of(payment));
+
+        orderService.cancelOrder(1L, order.getId());
+
+        assertEquals(PaymentStatus.UNPAID, payment.getStatus());
     }
 
     @Test

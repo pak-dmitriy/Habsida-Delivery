@@ -783,6 +783,50 @@ class OrderServiceTest {
     }
 
     @Test
+    void getOrder_shouldReturnOrder_whenOrderBelongsToStore() {
+        Order order = defaultOrder();
+        when(orderRepository.findByIdAndStoreId(6L, 1L)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId(6L)).thenReturn(List.of());
+
+        OrderResponse response = orderService.getOrder(1L, 6L);
+
+        assertEquals(6L, response.id());
+        assertEquals(OrderStatus.CREATED, response.orderStatus());
+    }
+
+    @Test
+    void getOrder_shouldThrow_whenOrderNotInStore() {
+        when(orderRepository.findByIdAndStoreId(6L, 2L)).thenReturn(Optional.empty());
+
+        assertThrows(OrderNotFoundException.class, () -> orderService.getOrder(2L, 6L));
+    }
+
+    @Test
+    void getOrders_shouldFilterByStatus_whenStatusGiven() {
+        Order order = defaultOrder();
+        when(orderRepository.findByStoreIdAndOrderStatus(1L, OrderStatus.ACCEPTED, pageable))
+                .thenReturn(new PageImpl<>(List.of(order)));
+        when(orderItemRepository.findByOrderIdIn(List.of(order.getId()))).thenReturn(List.of());
+
+        Page<OrderResponse> page = orderService.getOrders(1L, OrderStatus.ACCEPTED, pageable);
+
+        assertEquals(1, page.getContent().size());
+        verify(orderRepository).findByStoreIdAndOrderStatus(1L, OrderStatus.ACCEPTED, pageable);
+    }
+
+    @Test
+    void getOrders_shouldReturnAllOrders_whenStatusIsNull() {
+        Order order = defaultOrder();
+        when(orderRepository.findByStoreId(1L, pageable)).thenReturn(new PageImpl<>(List.of(order)));
+        when(orderItemRepository.findByOrderIdIn(List.of(order.getId()))).thenReturn(List.of());
+
+        Page<OrderResponse> page = orderService.getOrders(1L, null, pageable);
+
+        assertEquals(1, page.getContent().size());
+        verify(orderRepository).findByStoreId(1L, pageable);
+    }
+
+    @Test
     void cancelOrder_shouldSucceed_whenOrderIsAccepted() {
         Order order = defaultOrder();
         order.setOrderStatus(OrderStatus.ACCEPTED);

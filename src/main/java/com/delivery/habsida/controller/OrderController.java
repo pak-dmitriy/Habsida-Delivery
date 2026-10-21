@@ -3,11 +3,14 @@ package com.delivery.habsida.controller;
 import com.delivery.habsida.dto.OrderCreateRequest;
 import com.delivery.habsida.dto.OrderRejectRequest;
 import com.delivery.habsida.dto.OrderResponse;
+import com.delivery.habsida.entity.OrderStatus;
 import com.delivery.habsida.service.OrderService;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -70,5 +73,19 @@ public class OrderController {
     @GetMapping("/new")
     public Page<OrderResponse> newOrder(@PathVariable Long storeId, @ParameterObject Pageable pageable) {
         return orderService.getNewOrders(storeId, pageable);
+    }
+
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    @GetMapping("/{orderId}")
+    public OrderResponse getOrder(@PathVariable Long storeId, @PathVariable Long orderId) {
+        return orderService.getOrder(storeId, orderId);
+    }
+
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    @GetMapping
+    public Page<OrderResponse> getOrders(@PathVariable Long storeId,
+                                         @RequestParam(required = false) OrderStatus status,
+                                         @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return orderService.getOrders(storeId, status, pageable);
     }
 }

@@ -219,6 +219,60 @@ class OrderServiceTest {
     }
 
     @Test
+    void createOrder_shouldThrowException_whenStoreStatusNotActive() {
+        OrderCreateRequest request = defaultRequest();
+        Store store1 = new Store();
+        store1.setStatus(Status.FROZEN);
+
+        Customer customer1 = new Customer();
+        customer1.setStatus(CustomerStatus.ACTIVE);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store1));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer1));
+
+        assertThrows(StoreNotAvailableException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenCustomerStatusNotActive() {
+        OrderCreateRequest request = defaultRequest();
+        Store store1 = new Store();
+        store1.setStatus(Status.ACTIVE);
+
+        Customer customer1 = new Customer();
+        customer1.setStatus(CustomerStatus.BLOCKED);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store1));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer1));
+
+        assertThrows(CustomerNotAvailableException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenStoreAndCustomerStatusNotActive() {
+        OrderCreateRequest request = defaultRequest();
+        Store store1 = new Store();
+        store1.setStatus(Status.FROZEN);
+
+        Customer customer1 = new Customer();
+        customer1.setStatus(CustomerStatus.BLOCKED);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store1));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer1));
+
+        assertThrows(StoreNotAvailableException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
     void createOrder_shouldThrowException_whenDeliveryNotAvailable() {
         storeDeliverySetting = defaultSetting();
         storeDeliverySetting.setDeliveryEnabled(false);

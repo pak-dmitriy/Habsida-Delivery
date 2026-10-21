@@ -467,5 +467,27 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
+    @ExceptionHandler(StoreNotAvailableException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerStoreNotAvailableException(StoreNotAvailableException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONTINUE.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(CustomerNotAvailableException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerCustomerNotAvailableException(CustomerNotAvailableException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONTINUE.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
 }
 

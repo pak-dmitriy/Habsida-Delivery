@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +38,9 @@ public class OrderService {
     private final StoreDeliverySettingRepository storeDeliverySettingRepository;
     private final StoreDeliveryAreaRepository storeDeliveryAreaRepository;
     private final StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository;
+    private final StoreHourRepository storeHourRepository;
+    private final StoreBreakRepository storeBreakRepository;
+    private final Clock clock;
 
     public OrderService(OrderRepository orderRepository,
                         StoreRepository storeRepository,
@@ -48,7 +54,10 @@ public class OrderService {
                         OrderPaymentRepository orderPaymentRepository,
                         StoreDeliverySettingRepository storeDeliverySettingRepository,
                         StoreDeliveryAreaRepository storeDeliveryAreaRepository,
-                        StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository) {
+                        StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository,
+                        StoreHourRepository storeHourRepository,
+                        StoreBreakRepository storeBreakRepository,
+                        Clock clock) {
         this.orderRepository = orderRepository;
         this.storeRepository = storeRepository;
         this.customerRepository = customerRepository;
@@ -62,11 +71,40 @@ public class OrderService {
         this.storeDeliverySettingRepository = storeDeliverySettingRepository;
         this.storeDeliveryAreaRepository = storeDeliveryAreaRepository;
         this.storeDeliveryRestrictionRepository = storeDeliveryRestrictionRepository;
+        this.storeHourRepository = storeHourRepository;
+        this.storeBreakRepository = storeBreakRepository;
+        this.clock = clock;
     }
 
     private StoreDeliveryArea getDistrictOrThrow(String districtName, Long storeId) {
         return storeDeliveryAreaRepository.findByDistrictNameAndStoreId(districtName, storeId)
                 .orElseThrow(() -> new StoreDeliveryAreaNotFoundException("Area not found"));
+    }
+
+    private void validateStoreSchedule(Store store, LocalDateTime localDateTime) {
+        StoreHour storeHour = storeHourRepository.findByStoreIdAndDayOfWeek(store.getId(), localDateTime.getDayOfWeek())
+                .orElseThrow(() -> new StoreClosedException("Store closed"));
+
+        LocalTime time = localDateTime.toLocalTime();
+
+        if (storeHour.isDayOff()) {
+            throw new StoreClosedException("Store closed");
+        }
+        if (storeHour.getOpenTime() == null || storeHour.getCloseTime() == null) {
+            throw new StoreClosedException("Store closed");
+        }
+        if (time.isBefore(storeHour.getOpenTime()) || !time.isBefore(storeHour.getCloseTime())) {
+            throw new StoreClosedException("Store closed");
+        }
+        if (storeHour.getLastOrderCutoffTime() != null && time.isAfter(storeHour.getLastOrderCutoffTime())) {
+            throw new StoreClosedException("Store closed");
+        }
+
+        for (StoreBreak storeBreak : storeBreakRepository.findAllByStoreHourId(storeHour.getId())) {
+            if (!time.isBefore(storeBreak.getStartTime()) && time.isBefore(storeBreak.getEndTime())) {
+                throw new StoreClosedException("Store closed");
+            }
+        }
     }
 
     @Transactional
@@ -83,6 +121,8 @@ public class OrderService {
         if (customer.getStatus() != CustomerStatus.ACTIVE) {
             throw new CustomerNotAvailableException("Customer not available");
         }
+
+        validateStoreSchedule(store, LocalDateTime.now(clock));
 
         CustomerAddress customerAddress = customerAddressRepository.findById(orderCreateRequest.customerAddressId())
                 .orElseThrow(() -> new CustomerAddressNotFoundException("Customer address not found"));

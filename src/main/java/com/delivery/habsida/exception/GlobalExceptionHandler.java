@@ -489,5 +489,16 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
+    @ExceptionHandler(StoreClosedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlerStoreClosedException(StoreClosedException ex, HttpServletRequest request) {
+        return new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                List.of(ex.getMessage()),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
+    }
 }
 

@@ -71,4 +71,10 @@ public class OrderController {
     public Page<OrderResponse> newOrder(@PathVariable Long storeId, @ParameterObject Pageable pageable) {
         return orderService.getNewOrders(storeId, pageable);
     }
+
+    @PreAuthorize("@storeAccessGuard.canAccessStore(authentication, #storeId)")
+    @GetMapping("/{orderId}")
+    public OrderResponse getOrder(@PathVariable Long storeId, @PathVariable Long orderId) {
+        return orderService.getOrder(storeId, orderId);
+    }
 }

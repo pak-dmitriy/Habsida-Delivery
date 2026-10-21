@@ -411,6 +411,23 @@ public class OrderService {
                 );
     }
 
+    @Transactional
+    public OrderResponse getOrder(Long storeId, Long orderId) {
+        Order order = orderRepository.findByIdAndStoreId(orderId, storeId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
+
+        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        List<OrderItemResponse> itemDtos = items.stream()
+                .map(item -> {
+                    List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
+                    List<OrderItemModifierResponse> modifierDtos = modifierEntities.stream()
+                            .map(OrderItemModifierResponse::from).toList();
+                    return OrderItemResponse.from(item, modifierDtos);
+                }).toList();
+        return OrderResponse.from(order, itemDtos);
+    }
+
+
 
     private void restoreStock(List<OrderItem> items) {
         for (OrderItem item : items) {

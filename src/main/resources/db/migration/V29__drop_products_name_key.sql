@@ -1,0 +1,1 @@
+ALTER TABLE products DROP CONSTRAINT if EXISTS products_name_key;

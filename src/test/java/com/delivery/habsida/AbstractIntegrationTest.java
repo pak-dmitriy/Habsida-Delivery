@@ -5,8 +5,12 @@ import com.delivery.habsida.repository.*;
 import com.jayway.jsonpath.JsonPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestPropertySource;
@@ -14,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.math.BigDecimal;
+import java.time.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -22,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "jwt.secret=test-secret-key-for-integration-tests-min-32-bytes")
-
+@Import(AbstractIntegrationTest.FixedClockConfig.class)
 public abstract class AbstractIntegrationTest {
 
     @ServiceConnection
@@ -33,6 +38,16 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected static final String PASSWORD = "123456";
+
+    @TestConfiguration
+    static class FixedClockConfig {
+
+        @Bean
+        @Primary
+        public Clock fixedClock() {
+            return Clock.fixed(Instant.parse("2026-10-19T03:00:00Z"), ZoneId.of("Asia/Seoul"));
+        }
+    }
 
     @Autowired
     protected MockMvc mockMvc;
@@ -64,6 +79,8 @@ public abstract class AbstractIntegrationTest {
     protected ModifierGroupRepository modifierGroupRepository;
     @Autowired
     protected ProductModifierGroupRepository productModifierGroupRepository;
+    @Autowired
+    protected StoreHourRepository storeHourRepository;
 
     protected void createDeliverySetup(Store store) {
         StoreDeliverySetting setting = new StoreDeliverySetting();
@@ -124,6 +141,7 @@ public abstract class AbstractIntegrationTest {
         store.setDeliveryFee(new BigDecimal("5.00"));
         Store saved = storeRepository.save(store);
         createDeliverySetup(saved);
+        createWorkingHours(saved);
         return saved;
     }
 
@@ -157,7 +175,7 @@ public abstract class AbstractIntegrationTest {
         return productRepository.save(product);
     }
 
-   protected CustomerAddress createCustomer(String phone) {
+    protected CustomerAddress createCustomer(String phone) {
         Customer customer = new Customer();
         customer.setName(phone);
         customer.setPhone(phone);
@@ -171,5 +189,16 @@ public abstract class AbstractIntegrationTest {
         address.setApartment("Apartment");
         address.setCustomer(customer);
         return customerAddressRepository.save(address);
-   }
+    }
+
+    protected void createWorkingHours(Store store) {
+        StoreHour storeHour = new StoreHour();
+        storeHour.setStore(store);
+        storeHour.setDayOfWeek(DayOfWeek.MONDAY);
+        storeHour.setDayOff(false);
+        storeHour.setOpenTime(LocalTime.of(9, 0));
+        storeHour.setCloseTime(LocalTime.of(21, 0));
+
+        storeHourRepository.save(storeHour);
+    }
 }

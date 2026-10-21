@@ -75,6 +75,15 @@ public class OrderService {
                 .orElseThrow(() -> new StoreNotFoundException("Store not found"));
         Customer customer = customerRepository.findById(orderCreateRequest.customerId())
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
+
+        if (store.getStatus() != Status.ACTIVE) {
+            throw new StoreNotAvailableException("Store not available");
+        }
+
+        if (customer.getStatus() != CustomerStatus.ACTIVE) {
+            throw new CustomerNotAvailableException("Customer not available");
+        }
+
         CustomerAddress customerAddress = customerAddressRepository.findById(orderCreateRequest.customerAddressId())
                 .orElseThrow(() -> new CustomerAddressNotFoundException("Customer address not found"));
         if (!customerAddress.getCustomer().getId().equals(customer.getId())) {

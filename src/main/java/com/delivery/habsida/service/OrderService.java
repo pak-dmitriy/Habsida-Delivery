@@ -287,9 +287,11 @@ public class OrderService {
         order.setOrderStatus(REJECTED);
         order.setRejectedAt(LocalDateTime.now());
         order.setRejectReason(reason);
-        orderRepository.save(order);
+        orderRepository.saveAndFlush(order);
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        restoreStock(items);
+        refundIfPaid(order);
         List<OrderItemResponse> itemDtos = items.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
@@ -312,9 +314,11 @@ public class OrderService {
         }
         order.setOrderStatus(CANCELLED);
         order.setCancelledAt(LocalDateTime.now());
-        orderRepository.save(order);
+        orderRepository.saveAndFlush(order);
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        restoreStock(items);
+        refundIfPaid(order);
         List<OrderItemResponse> itemDtos = items.stream()
                 .map(item -> {
                     List<OrderItemModifier> modifierEntities = orderItemModifierRepository.findByOrderItemId(item.getId());
@@ -405,5 +409,21 @@ public class OrderService {
                             return OrderResponse.from(order, itemDtos);
                         }
                 );
+    }
+
+
+    private void restoreStock(List<OrderItem> items) {
+        for (OrderItem item : items) {
+            productRepository.increaseStock(item.getProduct().getId(), item.getQuantity());
+        }
+    }
+
+    private void refundIfPaid(Order order) {
+        orderPaymentRepository.findByOrderId(order.getId()).ifPresent(payment -> {
+            if (payment.getStatus() == PaymentStatus.PAID) {
+                payment.setStatus(PaymentStatus.REFUNDED);
+                orderPaymentRepository.save(payment);
+            }
+        });
     }
 }

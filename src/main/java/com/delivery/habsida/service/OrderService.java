@@ -379,7 +379,18 @@ public class OrderService {
 
     @Transactional
     public Page<OrderResponse> getNewOrders(Long storeId, Pageable pageable) {
-        Page<Order> ordersPage = orderRepository.findByStoreIdAndOrderStatus(storeId, CREATED, pageable);
+        return toResponsePage(orderRepository.findByStoreIdAndOrderStatus(storeId, CREATED, pageable));
+    }
+
+    @Transactional
+    public Page<OrderResponse> getOrders(Long storeId, OrderStatus status, Pageable pageable) {
+        Page<Order> ordersPage = status == null
+                ? orderRepository.findByStoreId(storeId, pageable)
+                : orderRepository.findByStoreIdAndOrderStatus(storeId, status, pageable);
+        return toResponsePage(ordersPage);
+    }
+
+    private Page<OrderResponse> toResponsePage(Page<Order> ordersPage) {
         List<Long> orderIds = ordersPage.getContent().stream()
                 .map(Order::getId).toList();
 

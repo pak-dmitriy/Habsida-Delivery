@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.List;
 
 
@@ -40,6 +42,7 @@ public class DevDataSeeder implements CommandLineRunner {
     private final StoreDeliverySettingRepository storeDeliverySettingRepository;
     private final StoreDeliveryAreaRepository storeDeliveryAreaRepository;
     private final OrderService orderService;
+    private final StoreHourRepository storeHourRepository;
 
     @Value("${app.seed.admin-password}")
     private String adminPassword;
@@ -47,13 +50,20 @@ public class DevDataSeeder implements CommandLineRunner {
     @Value("${app.seed.merchant-password}")
     private String merchantPassword;
 
-    public DevDataSeeder(UserRepository userRepository, RoleRepository roleRepository,
-                         UserRoleRepository userRoleRepository, PasswordEncoder passwordEncoder,
-                         StoreRepository storeRepository, EmployeeService employeeService,
-                         CategoryRepository categoryRepository, ProductRepository productRepository,
-                         CustomerRepository customerRepository, CustomerAddressRepository customerAddressRepository,
+    public DevDataSeeder(UserRepository userRepository,
+                         RoleRepository roleRepository,
+                         UserRoleRepository userRoleRepository,
+                         PasswordEncoder passwordEncoder,
+                         StoreRepository storeRepository,
+                         EmployeeService employeeService,
+                         CategoryRepository categoryRepository,
+                         ProductRepository productRepository,
+                         CustomerRepository customerRepository,
+                         CustomerAddressRepository customerAddressRepository,
                          StoreDeliverySettingRepository storeDeliverySettingRepository,
-                         StoreDeliveryAreaRepository storeDeliveryAreaRepository, OrderService orderService) {
+                         StoreDeliveryAreaRepository storeDeliveryAreaRepository,
+                         OrderService orderService,
+                         StoreHourRepository storeHourRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
@@ -67,6 +77,7 @@ public class DevDataSeeder implements CommandLineRunner {
         this.storeDeliverySettingRepository = storeDeliverySettingRepository;
         this.storeDeliveryAreaRepository = storeDeliveryAreaRepository;
         this.orderService = orderService;
+        this.storeHourRepository = storeHourRepository;
     }
 
     @Override
@@ -93,6 +104,16 @@ public class DevDataSeeder implements CommandLineRunner {
         userRoleRepository.save(userRole);
 
         Store burgerStore = createStore("Burger House", "burger-house", TypeStoreServices.FAST_FOOD);
+
+        for (DayOfWeek day : DayOfWeek.values()) {
+            StoreHour storeHour = new StoreHour();
+            storeHour.setStore(burgerStore);
+            storeHour.setDayOff(false);
+            storeHour.setDayOfWeek(day);
+            storeHour.setOpenTime(LocalTime.of(0, 0));
+            storeHour.setCloseTime(LocalTime.of(23,59));
+            storeHourRepository.save(storeHour);
+        }
 
         StoreDeliverySetting storeDeliverySetting = new StoreDeliverySetting();
         storeDeliverySetting.setStore(burgerStore);

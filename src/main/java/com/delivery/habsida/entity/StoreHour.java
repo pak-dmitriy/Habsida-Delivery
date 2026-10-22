@@ -17,10 +17,10 @@ public class StoreHour extends BaseEntity {
     @Column(name = "day_of_week", nullable = false)
     private DayOfWeek dayOfWeek;
 
-    @Column(name = "open_time")
+    @Column(name = "open_time", nullable = false)
     private LocalTime openTime;
 
-    @Column(name = "close_time")
+    @Column(name = "close_time", nullable = false)
     private LocalTime closeTime;
 
     @Column(name = "is_day_off", nullable = false)

@@ -1,8 +1,8 @@
 package com.delivery.habsida.service;
 
 import com.delivery.habsida.dto.OrderCreateRequest;
-import com.delivery.habsida.dto.OrderResponse;
 import com.delivery.habsida.dto.OrderItemRequest;
+import com.delivery.habsida.dto.OrderResponse;
 import com.delivery.habsida.entity.*;
 import com.delivery.habsida.exception.*;
 import com.delivery.habsida.repository.*;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.math.BigDecimal;
+import java.time.*;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,8 +61,15 @@ class OrderServiceTest {
     private StoreDeliveryAreaRepository storeDeliveryAreaRepository;
     @Mock
     private StoreDeliveryRestrictionRepository storeDeliveryRestrictionRepository;
+    @Mock
+    private StoreHourRepository storeHourRepository;
+    @Mock
+    private StoreBreakRepository storeBreakRepository;
 
     private final Pageable pageable = PageRequest.of(0, 10);
+
+    @Spy
+    private Clock clock = Clock.fixed(Instant.parse("2026-10-19T03:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @InjectMocks
     private OrderService orderService;
@@ -81,9 +90,11 @@ class OrderServiceTest {
     void setUp() {
         store = new Store();
         store.setId(1L);
+        store.setStatus(Status.ACTIVE);
 
         customer = new Customer();
         customer.setId(2L);
+        customer.setStatus(CustomerStatus.ACTIVE);
 
         customerAddress = new CustomerAddress();
         customerAddress.setId(3L);
@@ -190,6 +201,17 @@ class OrderServiceTest {
         return productModifierGroup1;
     }
 
+    private StoreHour defaultStoreHour() {
+        StoreHour storeHour = new StoreHour();
+        storeHour.setStore(store);
+        storeHour.setDayOfWeek(DayOfWeek.MONDAY);
+        storeHour.setDayOff(false);
+        storeHour.setOpenTime(LocalTime.of(9, 0));
+        storeHour.setCloseTime(LocalTime.of(21, 0));
+
+        return storeHour;
+    }
+
     @Test
     void createOrder() {
         OrderCreateRequest request = defaultRequest();
@@ -207,6 +229,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse result = orderService.createOrder(1L, request);
 
@@ -216,6 +239,60 @@ class OrderServiceTest {
         assertEquals("1", result.orderNumber());
 
         verify(orderPaymentRepository).save(any(OrderPayment.class));
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenStoreStatusNotActive() {
+        OrderCreateRequest request = defaultRequest();
+        Store store1 = new Store();
+        store1.setStatus(Status.FROZEN);
+
+        Customer customer1 = new Customer();
+        customer1.setStatus(CustomerStatus.ACTIVE);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store1));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer1));
+
+        assertThrows(StoreNotAvailableException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenCustomerStatusNotActive() {
+        OrderCreateRequest request = defaultRequest();
+        Store store1 = new Store();
+        store1.setStatus(Status.ACTIVE);
+
+        Customer customer1 = new Customer();
+        customer1.setStatus(CustomerStatus.BLOCKED);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store1));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer1));
+
+        assertThrows(CustomerNotAvailableException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenStoreAndCustomerStatusNotActive() {
+        OrderCreateRequest request = defaultRequest();
+        Store store1 = new Store();
+        store1.setStatus(Status.FROZEN);
+
+        Customer customer1 = new Customer();
+        customer1.setStatus(CustomerStatus.BLOCKED);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store1));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer1));
+
+        assertThrows(StoreNotAvailableException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
     }
 
     @Test
@@ -229,6 +306,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(DeliveryNotAvailableException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -247,6 +325,7 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryRestrictionRepository.existsByRestrictedAreaAndStoreId("City", 1L)).thenReturn(true);
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(DeliveryNotAvailableException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -266,6 +345,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(StoreDeliveryAreaNotFoundException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -291,6 +371,7 @@ class OrderServiceTest {
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(MinOrderPriceNotReachedException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -316,6 +397,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse result = orderService.createOrder(1L, request);
 
@@ -347,6 +429,7 @@ class OrderServiceTest {
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.of(modifierOption));
         when(productModifierGroupRepository.findAllByProductId(1L)).thenReturn(List.of(productModifierGroup));
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse result = orderService.createOrder(1L, updateDeliveryType);
 
@@ -368,6 +451,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.empty());
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(StoreDeliverySettingNotFoundException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -392,6 +476,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse result = orderService.createOrder(1L, request);
 
@@ -415,6 +500,7 @@ class OrderServiceTest {
         when(modifierOptionRepository.findById(1L)).thenReturn(Optional.empty());
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(ModifierOptionNotFoundException.class,
                 () -> orderService.createOrder(1L, request));
@@ -442,6 +528,7 @@ class OrderServiceTest {
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.empty());
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(CustomerAddressNotFoundException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -453,6 +540,7 @@ class OrderServiceTest {
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(ProductNotFoundException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -473,6 +561,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse result = orderService.createOrder(1L, defaultRequest());
 
@@ -488,6 +577,7 @@ class OrderServiceTest {
         when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(CustomerAddressNotFoundException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -503,6 +593,7 @@ class OrderServiceTest {
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(ProductNotFoundException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -516,6 +607,7 @@ class OrderServiceTest {
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(ProductNotAvailableException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -527,6 +619,7 @@ class OrderServiceTest {
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderCreateRequest request = new OrderCreateRequest(
                 DELIVERY,
@@ -548,6 +641,7 @@ class OrderServiceTest {
         when(customerAddressRepository.findById(1L)).thenReturn(Optional.of(customerAddress));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of());
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         assertThrows(InsufficientStockException.class,
                 () -> orderService.createOrder(1L, defaultRequest()));
@@ -868,6 +962,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse result = orderService.createOrder(1L, request);
 
@@ -891,6 +986,7 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse result = orderService.createOrder(1L, request);
 
@@ -915,6 +1011,8 @@ class OrderServiceTest {
         when(productModifierGroupRepository.existsByProductIdAndModifierGroupId(1L, 1L)).thenReturn(true);
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
+
         OrderResponse result = orderService.createOrder(1L, defaultRequest());
 
         assertEquals(new BigDecimal("6.60"), result.discountTotal());
@@ -948,6 +1046,7 @@ class OrderServiceTest {
         when(productRepository.decreaseStockAndGet(1L, 2)).thenReturn(List.of(98));
         when(storeDeliverySettingRepository.findByStoreId(1L)).thenReturn(Optional.of(storeDeliverySetting));
         when(storeDeliveryAreaRepository.findByDistrictNameAndStoreId(customerAddress.getCity(), 1L)).thenReturn(Optional.of(storeDeliveryArea));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(defaultStoreHour()));
 
         OrderResponse oneLineResult = orderService.createOrder(1L, oneLinesRequest);
 
@@ -968,5 +1067,109 @@ class OrderServiceTest {
 
         assertEquals(new BigDecimal("0.02"), oneLineResult.discountTotal());
         assertEquals(oneLineResult.discountTotal(), twoLinesResult.discountTotal());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenScheduleNotExists() {
+        OrderCreateRequest request = defaultRequest();
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.empty());
+
+        assertThrows(StoreClosedException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenStoreDayOff() {
+        OrderCreateRequest request = defaultRequest();
+
+        StoreHour storeHour = defaultStoreHour();
+        storeHour.setDayOff(true);
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(storeHour));
+
+        assertThrows(StoreClosedException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenStoreIsNotYetOpened() {
+        OrderCreateRequest request = defaultRequest();
+
+        StoreHour storeHour = defaultStoreHour();
+        storeHour.setOpenTime(LocalTime.of(13, 0));
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(storeHour));
+
+        assertThrows(StoreClosedException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenOrderAtClosedTime() {
+        OrderCreateRequest request = defaultRequest();
+
+        StoreHour storeHour = defaultStoreHour();
+        storeHour.setCloseTime(LocalTime.of(12, 0));
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(storeHour));
+
+        assertThrows(StoreClosedException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenLastOrderCutOff() {
+        OrderCreateRequest request = defaultRequest();
+
+        StoreHour storeHour = defaultStoreHour();
+        storeHour.setLastOrderCutoffTime(LocalTime.of(11, 0));
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(storeHour));
+
+        assertThrows(StoreClosedException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
+    }
+
+    @Test
+    void createOrder_shouldThrowException_whenOrderDuringBreak() {
+        OrderCreateRequest request = defaultRequest();
+        StoreHour storeHour = defaultStoreHour();
+        storeHour.setId(44L);
+
+        StoreBreak storeBreak = new StoreBreak();
+        storeBreak.setStoreHour(storeHour);
+        storeBreak.setStartTime(LocalTime.of(11, 0));
+        storeBreak.setEndTime(LocalTime.of(13, 0));
+
+        when(storeRepository.findById(1L)).thenReturn(Optional.of(store));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(storeHourRepository.findByStoreIdAndDayOfWeek(1L, DayOfWeek.MONDAY)).thenReturn(Optional.of(storeHour));
+        when(storeBreakRepository.findAllByStoreHourId(44L)).thenReturn(List.of(storeBreak));
+
+        assertThrows(StoreClosedException.class,
+                () -> orderService.createOrder(1L, request));
+
+        verify(productRepository, never()).decreaseStockAndGet(any(), anyInt());
     }
 }

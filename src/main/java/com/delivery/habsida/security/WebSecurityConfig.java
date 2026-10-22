@@ -50,10 +50,7 @@ public class WebSecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         PasswordEncoder encoder = new BCryptPasswordEncoder();
-        // Распечатает хэш пароля "123456" в консоль при запуске проекта
-        System.out.println("HASH FOR 123456: " + encoder.encode("123456"));
         return encoder;
-
     }
 
     @Bean
